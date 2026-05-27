@@ -1,0 +1,15 @@
+{
+  "name": "e-wallet-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "E-Wallet frontend (placeholder boilerplate)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tailwindcss": "^3.4.10"
+  }
+}
