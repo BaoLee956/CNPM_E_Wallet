@@ -13,5 +13,9 @@ export default function CustomerRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <CustomerLayout navItems={navItems}>{children}</CustomerLayout>;
+  return (
+    <CustomerLayout navItems={navItems} noHeader>
+      {children}
+    </CustomerLayout>
+  );
 }

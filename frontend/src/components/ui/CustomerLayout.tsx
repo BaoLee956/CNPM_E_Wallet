@@ -103,22 +103,25 @@ export function CustomerPage({
    ============================================================ */
 
 interface WalletCardProps {
-  balance: string;
-  accountName: string;
-  accountNumber?: string;
+  wallet: Wallet;
+  user: User;
   masked?: boolean;
   onToggleMask?: () => void;
   className?: string;
 }
 
 export function WalletCard({
-  balance,
-  accountName,
-  accountNumber,
+  wallet,
+  user,
   masked = false,
   onToggleMask,
   className = "",
 }: WalletCardProps) {
+  const formattedBalance = new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: wallet.currency,
+  }).format(wallet.balance);
+
   return (
     <div
       className={[
@@ -128,7 +131,6 @@ export function WalletCard({
         className,
       ].join(" ")}
     >
-      {/* Decorative circles */}
       <span className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-white/5" />
       <span className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-white/5" />
 
@@ -136,7 +138,7 @@ export function WalletCard({
         <p className="text-xs font-medium text-white/70">Total Balance</p>
         <div className="mt-1 flex items-center gap-2">
           <p className="text-3xl font-bold font-mono tracking-tight">
-            {masked ? "••••••••" : balance}
+            {masked ? "••••••••" : formattedBalance}
           </p>
           {onToggleMask && (
             <button
@@ -155,14 +157,14 @@ export function WalletCard({
             <p className="text-2xs text-white/60 uppercase tracking-wide">
               Account
             </p>
-            <p className="text-sm font-semibold mt-0.5">{accountName}</p>
+            <p className="text-sm font-semibold mt-0.5">{user.name}</p>
           </div>
-          {accountNumber && (
+          {wallet.accountNumber && (
             <div className="text-right">
               <p className="text-2xs text-white/60 uppercase tracking-wide">
                 Number
               </p>
-              <p className="text-sm font-mono mt-0.5">{accountNumber}</p>
+              <p className="text-sm font-mono mt-0.5">{wallet.accountNumber}</p>
             </div>
           )}
         </div>

@@ -129,6 +129,34 @@
   --z-modal: 200;
   --z-toast: 300;
   --z-tooltip: 400;
+
+  /* Ánh xạ surface tokens thành utility colors */
+  --color-surface-bg: var(--surface-bg);
+  --color-surface-base: var(--surface-base);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-sunken: var(--surface-sunken);
+
+  /* Ánh xạ border tokens */
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+
+  /* Ánh xạ text tokens nếu cần dùng dạng utility */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-inverse: var(--text-inverse);
+  --color-text-on-brand: var(--text-on-brand);
+
+  /* Brand tokens cũng nên ánh xạ để dùng dễ dàng */
+  --color-brand-default: var(--brand-default);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-active: var(--brand-active);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-border: var(--brand-border);
+  --color-brand-text: var(--brand-text);
 }
 
 /* Semantic tokens (light mode) */
@@ -211,8 +239,10 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  display: none;
+}
+* {
+  scrollbar-width: none;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
