@@ -36,28 +36,47 @@ function loadMockUsers(): Record<string, MockUserRecord> {
   if (typeof window === "undefined") return {};
   const stored = localStorage.getItem(MOCK_USERS_KEY);
   if (stored) return JSON.parse(stored);
-  
-  // Default user
-  const defaultUser: MockUserRecord = {
-    user: {
-      id: "1",
-      email: "user@example.com",
-      name: "John Doe",
-      avatar: "https://ui-avatars.com/api/?name=John+Doe&background=1aaba3&color=fff",
-      createdAt: new Date().toISOString(),
-    },
-    wallet: {
-      id: "wallet_1",
-      userId: "1",
-      balance: 1250000,
-      currency: "VND",
-      accountNumber: "198273645901",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    password: "123456",
+
+  // Default user - đầy đủ theo model User và Wallet
+  const defaultUser: User = {
+    id: "1",
+    email: "user@example.com",
+    phoneNumber: "0912345678",
+    name: "John Doe",
+    avatar: "https://ui-avatars.com/api/?name=John+Doe&background=1aaba3&color=fff",
+    role: "customer",
+    isEmailVerified: true,
+    isPhoneVerified: false,
+    twoFactorEnabled: false,
+    twoFactorSecret: undefined,
+    lastLoginAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    deletedAt: null,
   };
-  const initial = { "user@example.com": defaultUser };
+
+  const defaultWallet: Wallet = {
+    id: "wallet_1",
+    userId: "1",
+    balance: 1250000,
+    currency: "VND",
+    accountNumber: "198273645901",
+    isActive: true,
+    dailyLimit: 10000000,
+    monthlyLimit: 100000000,
+    currentDailyUsage: 0,
+    currentMonthlyUsage: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const initial: Record<string, MockUserRecord> = {
+    "user@example.com": {
+      user: defaultUser,
+      wallet: defaultWallet,
+      password: "123456",
+    },
+  };
   localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(initial));
   return initial;
 }
@@ -77,8 +96,17 @@ class AuthService {
     const users = this.getMockUsers();
     const record = users[credentials.email];
     if (record && record.password === credentials.password) {
+      // Cập nhật lastLoginAt
+      const updatedUser = {
+        ...record.user,
+        lastLoginAt: new Date().toISOString(),
+      };
+      record.user = updatedUser;
+      users[credentials.email] = record;
+      saveMockUsers(users);
+
       const response = {
-        user: record.user,
+        user: updatedUser,
         wallet: record.wallet,
         token: `mock-jwt-${Date.now()}`,
       };
@@ -95,12 +123,22 @@ class AuthService {
       throw new Error("Email already exists");
     }
 
+    const now = new Date().toISOString();
     const newUser: User = {
       id: String(Date.now()),
       email: data.email,
+      phoneNumber: undefined,
       name: data.name,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=1aaba3&color=fff`,
-      createdAt: new Date().toISOString(),
+      role: "customer",
+      isEmailVerified: false,
+      isPhoneVerified: false,
+      twoFactorEnabled: false,
+      twoFactorSecret: undefined,
+      lastLoginAt: now,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
     };
 
     const newWallet: Wallet = {
@@ -109,8 +147,13 @@ class AuthService {
       balance: 0,
       currency: "VND",
       accountNumber: Math.floor(Math.random() * 1000000000000).toString().padStart(12, "0"),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      isActive: true,
+      dailyLimit: 10000000,
+      monthlyLimit: 100000000,
+      currentDailyUsage: 0,
+      currentMonthlyUsage: 0,
+      createdAt: now,
+      updatedAt: now,
     };
 
     const newRecord: MockUserRecord = {

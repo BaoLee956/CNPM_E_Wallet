@@ -34,9 +34,18 @@ class WalletService {
       newBalance -= amount;
     }
 
+    // Cập nhật cả currentDailyUsage nếu cần (giả lập)
+    const today = new Date().toISOString().slice(0, 10);
+    // Ở đây mock đơn giản: chỉ tăng currentDailyUsage nếu type không phải deposit
+    let newDailyUsage = wallet.currentDailyUsage || 0;
+    if (type !== "deposit") {
+      newDailyUsage += amount;
+    }
+
     const updatedWallet: Wallet = {
       ...wallet,
       balance: newBalance,
+      currentDailyUsage: newDailyUsage,
       updatedAt: new Date().toISOString(),
     };
     localStorage.setItem(WALLET_KEY, JSON.stringify(updatedWallet));
