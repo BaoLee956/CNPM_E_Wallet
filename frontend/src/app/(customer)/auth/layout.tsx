@@ -4,6 +4,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/stores/authStore";
 
 export default function AuthLayout({
   children,
@@ -17,11 +18,14 @@ export default function AuthLayout({
     checkAuth();
   }, []);
 
+  const hasHydrated = useAuthStore((s) => s._hasHydrated);
+
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!isLoading && isAuthenticated) {
       router.replace("/home");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [hasHydrated, isAuthenticated, isLoading, router]);
 
   if (isLoading) {
     return (

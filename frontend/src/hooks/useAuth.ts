@@ -18,6 +18,7 @@ export function useAuth() {
     checkAuth,
     clearError,
     updateWallet,
+    updateUser,
   } = useAuthStore();
 
   const refreshWallet = async () => {
@@ -43,5 +44,7 @@ export function useAuth() {
     refreshWallet,
     redirectToDashboard,
     redirectToLogin,
+    updateWallet,
+    updateUser,
   };
 }

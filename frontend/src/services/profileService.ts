@@ -30,12 +30,23 @@ export const profileService = {
   async updateProfile(userId: string, data: UpdateProfileData): Promise<User> {
     await delay(600);
     // Get current user from localStorage (mock)
-    const stored = localStorage.getItem(`user_${userId}`);
+    const stored = localStorage.getItem("ewallet_user");
     if (!stored) throw new Error("User not found");
 
     const currentUser: User = JSON.parse(stored);
     const updatedUser = { ...currentUser, ...data };
-    localStorage.setItem(`user_${userId}`, JSON.stringify(updatedUser));
+    localStorage.setItem("ewallet_user", JSON.stringify(updatedUser));
+    const raw = localStorage.getItem("mock_users");
+    if (raw) {
+        const users = JSON.parse(raw);
+        for (const email in users) {
+            if (users[email].user.id === userId) {
+                users[email].user = updatedUser;
+                break;
+            }
+        }
+        localStorage.setItem("mock_users", JSON.stringify(users));
+    }
     return updatedUser;
   },
 

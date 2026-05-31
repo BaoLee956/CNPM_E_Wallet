@@ -243,7 +243,7 @@ export default function HomePage() {
           </button>
 
           <button
-            onClick={showComingSoon}
+            onClick={() => router.push("/topup")}
             className="flex flex-col items-center gap-2 py-4 rounded-2xl bg-white border border-soft shadow-sm transition-all duration-150 hover:shadow-md hover:border-brand-default active:scale-95 cursor-pointer"
           >
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning-light text-warning">

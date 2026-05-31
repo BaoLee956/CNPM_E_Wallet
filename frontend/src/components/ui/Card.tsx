@@ -10,6 +10,7 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   padding?: Padding;
   hoverable?: boolean;
   bordered?: boolean;
+  title?: string;
 }
 
 const paddingMap: Record<Padding, string> = {
@@ -23,6 +24,7 @@ export function Card({
   padding = "md",
   hoverable = false,
   bordered = true,
+  title,
   className = "",
   children,
   ...props
@@ -40,6 +42,9 @@ export function Card({
         .join(" ")}
       {...props}
     >
+      {title && (
+        <h3 className="text-sm font-semibold text-primary mb-4">{title}</h3>
+      )}
       {children}
     </div>
   );

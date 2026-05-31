@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "../styles/globals.css";
 import { ToastContainer } from "@/components/ui/Toast";
+import { seedDefaultUser } from "@/services/authService";
 export const metadata: Metadata = {
   title: {
     template: "%s | E-Wallet",
@@ -14,6 +15,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  if (typeof window !== "undefined") {
+    seedDefaultUser();
+  }
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
