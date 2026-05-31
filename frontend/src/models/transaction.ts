@@ -15,4 +15,9 @@ export interface Transaction extends Timestamps {
   metadata?: Record<string, any>; // linh hoạt chứa thông tin thêm
   completedAt?: string;
   cancelledAt?: string;
+  // transfer-specific fields (used by TransferSuccess display)
+  fromWalletId?: string;
+  toWalletId?: string;
+  recipientName?: string;
+  senderName?: string;
 }

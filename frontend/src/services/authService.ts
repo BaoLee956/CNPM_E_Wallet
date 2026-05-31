@@ -1,6 +1,7 @@
 // services/authService.ts
 import type { User } from "@/models/user";
 import type { Wallet } from "@/models/wallet";
+import { Currency, UserRole } from "@/models/common";
 import { setCookie, deleteCookie } from "@/utils/cookie";
 
 export interface LoginCredentials {
@@ -44,7 +45,7 @@ function loadMockUsers(): Record<string, MockUserRecord> {
     phoneNumber: "0912345678",
     name: "John Doe",
     avatar: "https://ui-avatars.com/api/?name=John+Doe&background=1aaba3&color=fff",
-    role: "customer",
+    role: UserRole.CUSTOMER,
     isEmailVerified: true,
     isPhoneVerified: false,
     twoFactorEnabled: false,
@@ -59,7 +60,7 @@ function loadMockUsers(): Record<string, MockUserRecord> {
     id: "wallet_1",
     userId: "1",
     balance: 1250000,
-    currency: "VND",
+    currency: Currency.VND,
     accountNumber: "198273645901",
     isActive: true,
     dailyLimit: 10000000,
@@ -130,7 +131,7 @@ class AuthService {
       phoneNumber: undefined,
       name: data.name,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=1aaba3&color=fff`,
-      role: "customer",
+      role: UserRole.CUSTOMER,
       isEmailVerified: false,
       isPhoneVerified: false,
       twoFactorEnabled: false,
@@ -145,7 +146,7 @@ class AuthService {
       id: `wallet_${Date.now()}`,
       userId: newUser.id,
       balance: 0,
-      currency: "VND",
+      currency: Currency.VND,
       accountNumber: Math.floor(Math.random() * 1000000000000).toString().padStart(12, "0"),
       isActive: true,
       dailyLimit: 10000000,

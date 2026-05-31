@@ -23,6 +23,7 @@ interface AuthState {
   checkAuth: () => Promise<void>;
   clearError: () => void;
   updateWallet: (wallet: Wallet) => void;
+  updateUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -89,8 +90,9 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      clearError: () => set({ error: null }),
-      updateWallet: (wallet) => set({ wallet }),
+  clearError: () => set({ error: null }),
+  updateWallet: (wallet) => set({ wallet }),
+  updateUser: (user) => set({ user }),
     }),
     {
       name: "auth-storage",
