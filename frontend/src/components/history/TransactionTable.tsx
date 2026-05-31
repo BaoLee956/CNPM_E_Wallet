@@ -4,7 +4,8 @@
 import { Table, Badge } from "@/components/ui";
 import type { Column } from "@/components/ui/Table";
 import type { Transaction } from "@/models/transaction";
-import { ArrowUpRight, ArrowDownLeft, CreditCard, Wallet } from "lucide-react";
+import { TransactionType, TransactionStatus } from "@/models/common";
+import { ArrowUpRight, ArrowDownLeft, CreditCard } from "lucide-react";
 
 interface TransactionTableProps {
   data: Transaction[];
@@ -22,14 +23,20 @@ function getDisplayType(tx: Transaction, currentWalletId?: string): string {
   return tx.type as string;
 }
 
-const getTypeIcon = (type: Transaction["type"]) => {
+const TYPE_LABELS: Partial<Record<TransactionType, string>> = {
+  [TransactionType.TRANSFER]: "Send",
+  [TransactionType.DEPOSIT]: "Receive",
+  [TransactionType.PAYMENT]: "Payment",
+};
+
+const getTypeIcon = (type: string) => {
   switch (type) {
     case "send":
       return <ArrowUpRight size={14} className="text-danger" />;
     case "receive":
       return <ArrowDownLeft size={14} className="text-success" />;
     case "topup":
-      return <Wallet size={14} className="text-info" />;
+      return <ArrowDownLeft size={14} className="text-success" />;
     case "payment":
       return <CreditCard size={14} className="text-warning" />;
     default:
@@ -70,11 +77,8 @@ function buildColumns(currentWalletId?: string): Column<Transaction>[] {
         const displayType = getDisplayType(row, currentWalletId);
         const isNegative = displayType === "send" || displayType === "payment";
         return (
-          <span
-            className={`font-mono font-medium ${isNegative ? "text-danger" : "text-success"}`}
-          >
-            {isNegative ? "−" : "+"} {row.amount.toLocaleString()}{" "}
-            {row.currency}
+          <span className={`font-mono font-medium ${isNegative ? "text-danger" : "text-success"}`}>
+            {isNegative ? "−" : "+"} {row.amount.toLocaleString()} {row.currency}
           </span>
         );
       },
@@ -84,21 +88,21 @@ function buildColumns(currentWalletId?: string): Column<Transaction>[] {
       header: "Status",
       align: "center",
       accessor: (row) => {
-        const variantMap: Record<
-          string,
-          "success" | "warning" | "danger" | "default"
-        > = {
+        const variantMap: Record<string, "success" | "warning" | "danger" | "default"> = {
           completed: "success",
           success: "success",
           pending: "warning",
           failed: "danger",
         };
+        const labelMap: Record<string, string> = {
+          completed: "Completed",
+          success: "Completed",
+          pending: "Pending",
+          failed: "Failed",
+        };
         return (
-          <Badge
-            variant={variantMap[row.status as string] ?? "default"}
-            size="sm"
-          >
-            {row.status as string}
+          <Badge variant={variantMap[row.status as string] ?? "default"} size="sm">
+            {labelMap[row.status as string] ?? row.status}
           </Badge>
         );
       },

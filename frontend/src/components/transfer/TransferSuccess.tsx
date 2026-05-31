@@ -47,7 +47,7 @@ export function TransferSuccess({ result, onReset }: TransferSuccessProps) {
         <div className="flex justify-between">
           <span className="text-secondary text-sm">Reference</span>
           <span className="font-mono text-sm">
-            {result.transaction.referenceCode}
+            {result.transaction.referenceId}
           </span>
         </div>
         <div className="border-t border-subtle pt-2 mt-2">
