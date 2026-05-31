@@ -27,18 +27,18 @@ export function ProfileForm({
   const [name, setName] = useState(initialName);
   const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState(initialPhone);
-  const { toast } = useToast();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await onSubmit({ name, email, phone });
-      toast({ type: "success", message: "Profile updated successfully" });
+      showToast("Profile updated successfully", "success");
     } catch (err) {
-      toast({
-        type: "error",
-        message: err instanceof Error ? err.message : "Update failed",
-      });
+      showToast(
+        err instanceof Error ? err.message : "Update failed",
+        "error"
+      );
     }
   };
 

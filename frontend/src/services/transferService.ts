@@ -1,5 +1,6 @@
 // services/transferService.ts
 import type { Transaction } from "@/models/transaction";
+import { TransactionType, TransactionStatus } from "@/models/common";
 import { walletService } from "./walletService";
 import { addTransaction } from "./transactionService";
 
@@ -45,15 +46,14 @@ class TransferService {
       toWalletId: recipient.walletId,
       amount: data.amount,
       currency: currentWallet.currency,
-      type: "transfer",
-      status: "completed",
+      type: TransactionType.TRANSFER,
+      status: TransactionStatus.SUCCESS,
       description: data.description || "",
-      referenceCode: `REF${Math.floor(Math.random() * 1000000)}`,
+      referenceId: `REF${Math.floor(Math.random() * 1000000)}`,
       createdAt: now,
       updatedAt: now,
       // optional fields
       fee: 0,
-      failureReason: null,
       completedAt: now,
     };
 

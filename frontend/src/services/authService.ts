@@ -1,6 +1,7 @@
 // services/authService.ts
 import type { User } from "@/models/user";
 import type { Wallet } from "@/models/wallet";
+import { Currency, UserRole } from "@/models/common";
 import { setCookie, deleteCookie } from "@/utils/cookie";
 
 export interface LoginCredentials {
@@ -48,7 +49,7 @@ function setMockUsers(users: Record<string, MockUserRecord>) {
 
 export function seedDefaultUser() {
   const existing = getMockUsers();
-  if (existing["user@example.com"]) return; // đã có rồi, không làm gì
+  if (existing["user@example.com"]) return;
 
   const now = new Date().toISOString();
   const defaultUser: User = {
@@ -56,7 +57,8 @@ export function seedDefaultUser() {
     email: "user@example.com",
     phoneNumber: "0912345678",
     name: "John Doe",
-    role: "customer",
+    avatar: "https://ui-avatars.com/api/?name=John+Doe&background=1aaba3&color=fff",
+    role: UserRole.CUSTOMER,
     isEmailVerified: true,
     isPhoneVerified: false,
     twoFactorEnabled: false,
@@ -69,7 +71,7 @@ export function seedDefaultUser() {
     id: "wallet_1",
     userId: "1",
     balance: 1250000,
-    currency: "VND",
+    currency: Currency.VND,
     accountNumber: "198273645901",
     isActive: true,
     dailyLimit: 10000000,
@@ -88,7 +90,6 @@ class AuthService {
     const users = getMockUsers();
     const record = users[credentials.email];
     if (record && record.password === credentials.password) {
-      // Cập nhật lastLoginAt
       const updatedUser = {
         ...record.user,
         lastLoginAt: new Date().toISOString(),
@@ -122,7 +123,7 @@ class AuthService {
       phoneNumber: undefined,
       name: data.name,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=1aaba3&color=fff`,
-      role: "customer",
+      role: UserRole.CUSTOMER,
       isEmailVerified: false,
       isPhoneVerified: false,
       twoFactorEnabled: false,
@@ -137,8 +138,8 @@ class AuthService {
       id: `wallet_${Date.now()}`,
       userId: newUser.id,
       balance: 0,
-      currency: "VND",
-      accountNumber: String(Date.now()).slice(-12).padStart(12, "0"),
+      currency: Currency.VND,
+      accountNumber: Math.floor(Math.random() * 1000000000000).toString().padStart(12, "0"),
       isActive: true,
       dailyLimit: 10000000,
       monthlyLimit: 100000000,
@@ -177,7 +178,7 @@ class AuthService {
   }
 
   async verifyToken(): Promise<boolean> {
-    if (typeof window === 'undefined') return false; 
+    if (typeof window === "undefined") return false;
     const token = localStorage.getItem(TOKEN_KEY);
     return !!token;
   }
@@ -186,8 +187,8 @@ class AuthService {
     localStorage.setItem(TOKEN_KEY, response.token);
     localStorage.setItem(USER_KEY, JSON.stringify(response.user));
     localStorage.setItem(WALLET_KEY, JSON.stringify(response.wallet));
-    setCookie('auth_token', response.token);
-    setCookie('user_id', response.user.id);
+    setCookie("auth_token", response.token);
+    setCookie("user_id", response.user.id);
   }
 
   private clearSession(): void {
@@ -195,8 +196,8 @@ class AuthService {
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(WALLET_KEY);
     localStorage.removeItem("auth-storage");
-    deleteCookie('auth_token');
-    deleteCookie('user_id');
+    deleteCookie("auth_token");
+    deleteCookie("user_id");
   }
 }
 

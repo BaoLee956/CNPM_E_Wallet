@@ -36,7 +36,7 @@ export default function TransferPage() {
           <TransferSuccess result={result} onReset={reset} />
         ) : (
           <TransferForm
-            onSubmit={executeTransfer}
+            onSubmit={async (data) => { await executeTransfer(data); }}
             isLoading={isLoading}
             error={error}
           />

@@ -20,32 +20,29 @@ export function ChangePasswordForm({
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const { toast } = useToast();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      toast({ type: "error", message: "New passwords do not match" });
+      showToast("New passwords do not match", "error");
       return;
     }
     if (newPassword.length < 6) {
-      toast({
-        type: "error",
-        message: "Password must be at least 6 characters",
-      });
+      showToast("Password must be at least 6 characters", "error");
       return;
     }
     try {
       await onSubmit({ oldPassword, newPassword });
-      toast({ type: "success", message: "Password changed successfully" });
+      showToast("Password changed successfully", "success");
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (err) {
-      toast({
-        type: "error",
-        message: err instanceof Error ? err.message : "Change failed",
-      });
+      showToast(
+        err instanceof Error ? err.message : "Change failed",
+        "error"
+      );
     }
   };
 
