@@ -44,6 +44,7 @@ export function useAuth() {
     refreshWallet,
     redirectToDashboard,
     redirectToLogin,
+    updateWallet,
     updateUser,
   };
 }

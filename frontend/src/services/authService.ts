@@ -31,30 +31,40 @@ const TOKEN_KEY = "ewallet_token";
 const USER_KEY = "ewallet_user";
 const WALLET_KEY = "ewallet_wallet";
 
-// Helper: load mock users from localStorage
-function loadMockUsers(): Record<string, MockUserRecord> {
+function getMockUsers(): Record<string, MockUserRecord> {
   if (typeof window === "undefined") return {};
-  const stored = localStorage.getItem(MOCK_USERS_KEY);
-  if (stored) return JSON.parse(stored);
+  try {
+    const stored = localStorage.getItem(MOCK_USERS_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
 
-  // Default user - đầy đủ theo model User và Wallet
+function setMockUsers(users: Record<string, MockUserRecord>) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+}
+
+export function seedDefaultUser() {
+  const existing = getMockUsers();
+  if (existing["user@example.com"]) return; // đã có rồi, không làm gì
+
+  const now = new Date().toISOString();
   const defaultUser: User = {
     id: "1",
     email: "user@example.com",
     phoneNumber: "0912345678",
     name: "John Doe",
-    avatar: "https://ui-avatars.com/api/?name=John+Doe&background=1aaba3&color=fff",
     role: "customer",
     isEmailVerified: true,
     isPhoneVerified: false,
     twoFactorEnabled: false,
-    twoFactorSecret: undefined,
-    lastLoginAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    lastLoginAt: now,
+    createdAt: now,
+    updatedAt: now,
     deletedAt: null,
   };
-
   const defaultWallet: Wallet = {
     id: "wallet_1",
     userId: "1",
@@ -66,34 +76,16 @@ function loadMockUsers(): Record<string, MockUserRecord> {
     monthlyLimit: 100000000,
     currentDailyUsage: 0,
     currentMonthlyUsage: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
   };
-
-  const initial: Record<string, MockUserRecord> = {
-    "user@example.com": {
-      user: defaultUser,
-      wallet: defaultWallet,
-      password: "123456",
-    },
-  };
-  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(initial));
-  return initial;
-}
-
-function saveMockUsers(users: Record<string, MockUserRecord>) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+  setMockUsers({ "user@example.com": { user: defaultUser, wallet: defaultWallet, password: "123456" } });
 }
 
 class AuthService {
-  private getMockUsers(): Record<string, MockUserRecord> {
-    return loadMockUsers();
-  }
-
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     await new Promise((resolve) => setTimeout(resolve, 800));
-    const users = this.getMockUsers();
+    const users = getMockUsers();
     const record = users[credentials.email];
     if (record && record.password === credentials.password) {
       // Cập nhật lastLoginAt
@@ -103,7 +95,7 @@ class AuthService {
       };
       record.user = updatedUser;
       users[credentials.email] = record;
-      saveMockUsers(users);
+      setMockUsers(users);
 
       const response = {
         user: updatedUser,
@@ -118,7 +110,7 @@ class AuthService {
 
   async register(data: RegisterData): Promise<AuthResponse> {
     await new Promise((resolve) => setTimeout(resolve, 800));
-    const users = this.getMockUsers();
+    const users = getMockUsers();
     if (users[data.email]) {
       throw new Error("Email already exists");
     }
@@ -146,7 +138,7 @@ class AuthService {
       userId: newUser.id,
       balance: 0,
       currency: "VND",
-      accountNumber: Math.floor(Math.random() * 1000000000000).toString().padStart(12, "0"),
+      accountNumber: String(Date.now()).slice(-12).padStart(12, "0"),
       isActive: true,
       dailyLimit: 10000000,
       monthlyLimit: 100000000,
@@ -156,14 +148,11 @@ class AuthService {
       updatedAt: now,
     };
 
-    const newRecord: MockUserRecord = {
-      user: newUser,
-      wallet: newWallet,
-      password: data.password,
-    };
+    users[data.email] = { user: newUser, wallet: newWallet, password: data.password };
+    setMockUsers(users);
 
-    users[data.email] = newRecord;
-    saveMockUsers(users);
+    const verify = getMockUsers();
+    console.log("[register] saved users:", Object.keys(verify));
 
     const response = { user: newUser, wallet: newWallet, token: `mock-jwt-${Date.now()}` };
     this.setSession(response);
