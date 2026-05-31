@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
-import { useAuth } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { CustomerPage, WalletCard, Badge } from "@/components/ui";
 import {
   ArrowUpRight,
@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-/* ── Mock data (only used when authenticated) ── */
 const recentTransactions = [
   {
     id: "1",
@@ -73,7 +72,9 @@ export default function HomePage() {
   const [masked, setMasked] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { showToast } = useToast();
-  const { user, wallet, isAuthenticated, isLoading } = useAuth();
+
+  // ✅ Dùng useRequireAuth thay vì useAuth — tự gọi checkAuth khi mount
+  const { user, wallet, isAuthenticated, isLoading } = useRequireAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -86,7 +87,6 @@ export default function HomePage() {
     return "Good evening";
   };
 
-  // Hỗ trợ điều hướng
   const goToTransfer = () => router.push("/transfer");
   const showComingSoon = () => {
     showToast("This feature is coming soon!", "info", 2000);

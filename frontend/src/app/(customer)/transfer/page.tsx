@@ -6,11 +6,13 @@ import { TransferForm } from "@/components/transfer/TransferForm";
 import { TransferSuccess } from "@/components/transfer/TransferSuccess";
 import { TransferSkeleton } from "@/components/transfer/TransferSkeleton";
 import { useTransfer } from "@/hooks/useTransfer";
-import { useAuth } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 export default function TransferPage() {
   const { executeTransfer, isLoading, error, result, reset } = useTransfer();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+  // ✅ Dùng useRequireAuth thay vì useAuth
+  const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
 
   if (authLoading || !isAuthenticated) {
     return (
@@ -19,14 +21,6 @@ export default function TransferPage() {
       </CustomerPage>
     );
   }
-
-  const handleTransfer = async (data: any) => {
-    await executeTransfer(data);
-  };
-
-  const handleReset = () => {
-    reset();
-  };
 
   return (
     <CustomerPage>
@@ -39,10 +33,10 @@ export default function TransferPage() {
         </div>
 
         {result ? (
-          <TransferSuccess result={result} onReset={handleReset} />
+          <TransferSuccess result={result} onReset={reset} />
         ) : (
           <TransferForm
-            onSubmit={handleTransfer}
+            onSubmit={executeTransfer}
             isLoading={isLoading}
             error={error}
           />

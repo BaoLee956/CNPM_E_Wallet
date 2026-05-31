@@ -7,12 +7,14 @@ import { TransactionTable } from "@/components/history/TransactionTable";
 import { TransactionSkeleton } from "@/components/history/TransactionSkeleton";
 import { Pagination } from "@/components/ui/Table";
 import { useTransactions } from "@/hooks/useTransactions";
-import { useAuth } from "@/hooks/useAuth";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import Link from "next/link";
 import { Button } from "@/components/ui";
 
 export default function HistoryPage() {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  // ✅ Dùng useRequireAuth thay vì useAuth
+  const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
+
   const {
     transactions,
     total,
