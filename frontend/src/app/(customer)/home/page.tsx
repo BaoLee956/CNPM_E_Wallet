@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useAuth } from "@/hooks/useAuth";
-import { useAuth } from "@/hooks/useAuth";
 import { CustomerPage, WalletCard, Badge } from "@/components/ui";
 import {
   ArrowUpRight,
