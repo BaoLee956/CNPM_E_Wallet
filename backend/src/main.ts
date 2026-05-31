@@ -1,10 +1,19 @@
-/**
- * Entry point (placeholder).
- * TODO: Replace with NestJS bootstrap (or your preferred framework).
- */
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
+
 async function bootstrap() {
-  // eslint-disable-next-line no-console
-  console.log("E-Wallet backend is set up. Replace this with real server bootstrap.");
+  const app = await NestFactory.create(AppModule);
+
+  app.enableCors(); // Cho phép CORS để frontend có thể gọi API
+
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true, // Loại bỏ các thuộc tính không có trong DTO
+  })); // Sử dụng ValidationPipe toàn cục
+
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`E-Wallet backend is set up and listening on port ${port}.`);
 }
 
 bootstrap();
