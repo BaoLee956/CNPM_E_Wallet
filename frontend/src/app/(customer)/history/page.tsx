@@ -1,18 +1,22 @@
 // app/(customer)/history/page.tsx
 "use client";
 
+import { useState } from "react";
 import { CustomerPage } from "@/components/ui";
 import { TransactionFilters } from "@/components/history/TransactionFilters";
 import { TransactionTable } from "@/components/history/TransactionTable";
 import { TransactionSkeleton } from "@/components/history/TransactionSkeleton";
+import { TransactionDetailModal } from "@/components/history/TransactionDetailModal";
 import { Pagination } from "@/components/ui/Table";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import type { Transaction } from "@/models/transaction";
 import Link from "next/link";
 import { Button } from "@/components/ui";
 
 export default function HistoryPage() {
   const { isAuthenticated, isLoading: authLoading, wallet } = useRequireAuth();
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
   const {
     transactions,
@@ -87,6 +91,8 @@ export default function HistoryPage() {
               data={transactions}
               loading={false}
               currentWalletId={wallet?.id}
+              // ← Truyền handler để mở detail modal khi click row
+              onRowClick={(tx) => setSelectedTx(tx)}
             />
             <Pagination
               page={page}
@@ -97,6 +103,13 @@ export default function HistoryPage() {
           </>
         )}
       </div>
+
+      {/* Transaction detail bottom sheet */}
+      <TransactionDetailModal
+        transaction={selectedTx}
+        currentWalletId={wallet?.id}
+        onClose={() => setSelectedTx(null)}
+      />
     </CustomerPage>
   );
 }
