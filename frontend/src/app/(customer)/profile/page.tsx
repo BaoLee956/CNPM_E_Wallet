@@ -1,6 +1,8 @@
 // app/customer/profile/page.tsx
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CustomerPage } from "@/components/ui/CustomerLayout";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -8,6 +10,7 @@ import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+
 // Simple Avatar using initial letters
 function Avatar({ name }: { name: string }) {
   const initial = name?.charAt(0)?.toUpperCase() || "U";
@@ -19,9 +22,16 @@ function Avatar({ name }: { name: string }) {
 }
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { user, updating, changingPassword, updateProfile, changePassword } =
     useProfile();
-  const { wallet, isLoading: authLoading } = useAuth();
+  const { wallet, isLoading: authLoading, logout } = useAuth();
+  const [showChangePassword, setShowChangePassword] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/auth/login");
+  };
 
   if (authLoading) {
     return (
@@ -107,13 +117,42 @@ export default function ProfilePage() {
         />
       </Card>
 
-      {/* Change Password Card */}
-      <Card title="Change Password">
-        <ChangePasswordForm
-          onSubmit={changePassword}
-          isLoading={changingPassword}
-        />
-      </Card>
+      {/* Change Password Section - Toggleable */}
+      <div className="space-y-4">
+        {!showChangePassword ? (
+          <button
+            onClick={() => setShowChangePassword(true)}
+            className="w-full inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
+          >
+            Change Password
+          </button>
+        ) : (
+          <Card title="Change Password">
+            <ChangePasswordForm
+              onSubmit={changePassword}
+              isLoading={changingPassword}
+            />
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowChangePassword(false)}
+                className="text-sm text-secondary hover:text-primary"
+              >
+                Cancel
+              </button>
+            </div>
+          </Card>
+        )}
+      </div>
+
+      {/* Logout Button */}
+      <div className="pt-4">
+        <button
+          onClick={handleLogout}
+          className="w-full inline-flex justify-center rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+        >
+          Logout
+        </button>
+      </div>
     </CustomerPage>
   );
 }

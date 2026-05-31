@@ -12,8 +12,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui";
 
 export default function HistoryPage() {
-  // ✅ Dùng useRequireAuth thay vì useAuth
-  const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
+  const { isAuthenticated, isLoading: authLoading, wallet } = useRequireAuth();
 
   const {
     transactions,
@@ -84,7 +83,11 @@ export default function HistoryPage() {
           </div>
         ) : (
           <>
-            <TransactionTable data={transactions} loading={false} />
+            <TransactionTable
+              data={transactions}
+              loading={false}
+              currentWalletId={wallet?.id}
+            />
             <Pagination
               page={page}
               pageSize={pageSize}

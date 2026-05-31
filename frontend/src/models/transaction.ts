@@ -5,11 +5,17 @@ export interface Transaction extends Timestamps {
   id: ID;
   userId: ID; // chủ sở hữu giao dịch
   walletId: ID;
-  type: TransactionType;
-  status: TransactionStatus;
+  fromWalletId?: ID;
+  toWalletId?: ID;
+  referenceCode?: string;
+  failureReason?: string | null;
+  recipientName?: string;
+  senderName?: string;
+  type: TransactionType | string;
+  status: TransactionStatus | string;
   amount: number; // số tiền (đơn vị nhỏ nhất)
   fee?: number;
-  currency: Currency;
+  currency: Currency | string;
   referenceId?: string; // ID của bản ghi liên quan (transferId, topupId, paymentId)
   description?: string;
   metadata?: Record<string, any>; // linh hoạt chứa thông tin thêm

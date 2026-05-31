@@ -35,27 +35,43 @@ export function addTransaction(walletId: string, transaction: Transaction) {
   return transaction;
 }
 
-// Lấy danh sách transaction với lọc & phân trang
+export function normalizeTransactionType(
+  tx: Transaction,
+  currentWalletId: string
+): string {
+  if (tx.type === "transfer") {
+    return tx.fromWalletId === currentWalletId ? "send" : "receive";
+  }
+  if (tx.type === "deposit") return "topup";
+  return tx.type as string;
+}
+
 export async function getTransactions(
   walletId: string,
   filters: TransactionFilters,
   page: number = 1,
   pageSize: number = 10
 ): Promise<PaginatedResult<Transaction>> {
-  // Mô phỏng độ trễ mạng
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   let transactions = loadTransactions(walletId);
 
-  // Lọc theo loại
+  // Normalize type trước khi filter
+  const normalized = transactions.map((tx) => ({
+    ...tx,
+    _displayType: normalizeTransactionType(tx, walletId), // field tạm để filter
+  }));
+
+  // Filter theo display type
+  let filtered = normalized;
   if (filters.type !== "all") {
-    transactions = transactions.filter((tx) => tx.type === filters.type);
+    filtered = normalized.filter((tx) => tx._displayType === filters.type);
   }
 
-  // Lọc theo từ khóa (description, recipientName, senderName)
+  // Filter theo search
   if (filters.search.trim()) {
     const keyword = filters.search.toLowerCase();
-    transactions = transactions.filter(
+    filtered = filtered.filter(
       (tx) =>
         tx.description?.toLowerCase().includes(keyword) ||
         tx.recipientName?.toLowerCase().includes(keyword) ||
@@ -63,12 +79,12 @@ export async function getTransactions(
     );
   }
 
-  // Sắp xếp mới nhất lên đầu
-  transactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  filtered.sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 
-  const total = transactions.length;
-  const start = (page - 1) * pageSize;
-  const paginated = transactions.slice(start, start + pageSize);
+  const total = filtered.length;
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   return { data: paginated, total };
 }
