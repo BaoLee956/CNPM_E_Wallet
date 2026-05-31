@@ -4,6 +4,7 @@
 import { Table, Badge } from "@/components/ui";
 import type { Column } from "@/components/ui/Table";
 import type { Transaction } from "@/models/transaction";
+import { TransactionType, TransactionStatus } from "@/models/common";
 import { ArrowUpRight, ArrowDownLeft, CreditCard, Wallet } from "lucide-react";
 
 interface TransactionTableProps {
@@ -12,29 +13,42 @@ interface TransactionTableProps {
   onRowClick?: (transaction: Transaction) => void;
 }
 
-const getTypeIcon = (type: Transaction["type"]) => {
+const TYPE_LABELS: Partial<Record<TransactionType, string>> = {
+  [TransactionType.TRANSFER]: "Send",
+  [TransactionType.DEPOSIT]: "Receive",
+  [TransactionType.PAYMENT]: "Payment",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  completed: "Completed",
+  pending: "Pending",
+  failed: "Failed",
+};
+
+const getTypeIcon = (type: TransactionType) => {
   switch (type) {
-    case "send":
+    case TransactionType.TRANSFER:
       return <ArrowUpRight size={14} className="text-danger" />;
-    case "receive":
+    case TransactionType.DEPOSIT:
       return <ArrowDownLeft size={14} className="text-success" />;
-    case "topup":
-      return <Wallet size={14} className="text-info" />;
-    case "payment":
+    case TransactionType.PAYMENT:
       return <CreditCard size={14} className="text-warning" />;
     default:
       return null;
   }
 };
 
-const getTypeLabel = (type: Transaction["type"]) => {
-  const map = {
-    send: "Send",
-    receive: "Receive",
-    topup: "Topup",
-    payment: "Payment",
-  };
-  return map[type] || type;
+const getStatusVariant = (status: TransactionStatus) => {
+  switch (status) {
+    case TransactionStatus.SUCCESS:
+      return "success";
+    case TransactionStatus.PENDING:
+      return "warning";
+    case TransactionStatus.FAILED:
+      return "danger";
+    default:
+      return "default";
+  }
 };
 
 const columns: Column<Transaction>[] = [
@@ -44,7 +58,7 @@ const columns: Column<Transaction>[] = [
     accessor: (row) => (
       <div className="flex items-center gap-1.5">
         {getTypeIcon(row.type)}
-        <span className="text-sm">{getTypeLabel(row.type)}</span>
+        <span className="text-sm">{TYPE_LABELS[row.type] ?? row.type}</span>
       </div>
     ),
   },
@@ -53,7 +67,7 @@ const columns: Column<Transaction>[] = [
     header: "Amount",
     align: "right",
     accessor: (row) => {
-      const isNegative = row.type === "send" || row.type === "payment";
+      const isNegative = row.type === TransactionType.TRANSFER || row.type === TransactionType.PAYMENT;
       const color = isNegative ? "text-danger" : "text-success";
       const sign = isNegative ? "-" : "+";
       return (
@@ -68,14 +82,9 @@ const columns: Column<Transaction>[] = [
     header: "Status",
     align: "center",
     accessor: (row) => {
-      const variantMap = {
-        completed: "success",
-        pending: "warning",
-        failed: "danger",
-      } as const;
       return (
-        <Badge variant={variantMap[row.status] || "default"} size="sm">
-          {row.status}
+        <Badge variant={getStatusVariant(row.status)} size="sm">
+          {STATUS_LABELS[row.status] ?? row.status}
         </Badge>
       );
     },

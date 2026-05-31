@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/useToast";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { CustomerPage, WalletCard, Badge } from "@/components/ui";
 import {
   ArrowUpRight,
@@ -14,6 +15,7 @@ import {
   Clock,
   Zap,
   Bell,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -75,6 +77,7 @@ export default function HomePage() {
 
   // ✅ Dùng useRequireAuth thay vì useAuth — tự gọi checkAuth khi mount
   const { user, wallet, isAuthenticated, isLoading } = useRequireAuth();
+  const { logout } = useAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -195,6 +198,16 @@ export default function HomePage() {
           <button className="relative flex h-11 w-11 items-center justify-center rounded-full bg-surface-sunken text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-primary">
             <Bell size={18} />
             <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-danger border-2 border-white shadow-sm" />
+          </button>
+          <button
+            onClick={async () => {
+              await logout();
+              router.push("/");
+            }}
+            title="Sign Out"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-sunken text-secondary transition-colors duration-150 hover:bg-rose-50 hover:text-danger"
+          >
+            <LogOut size={18} />
           </button>
         </div>
 

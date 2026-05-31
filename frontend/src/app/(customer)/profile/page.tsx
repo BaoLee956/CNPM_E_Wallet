@@ -99,8 +99,10 @@ export default function ProfilePage() {
         <ProfileForm
           initialName={user?.name || ""}
           initialEmail={user?.email || ""}
-          initialPhone={user?.phone || ""}
-          onSubmit={updateProfile}
+          initialPhone={user?.phoneNumber || ""}
+          onSubmit={async (data) => {
+            await updateProfile(data);
+          }}
           isLoading={updating}
         />
       </Card>
