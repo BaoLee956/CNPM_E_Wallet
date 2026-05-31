@@ -188,6 +188,7 @@ class AuthService {
   }
 
   async verifyToken(): Promise<boolean> {
+    if (typeof window === 'undefined') return false; 
     const token = localStorage.getItem(TOKEN_KEY);
     return !!token;
   }
@@ -204,6 +205,7 @@ class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(WALLET_KEY);
+    localStorage.removeItem("auth-storage");
     deleteCookie('auth_token');
     deleteCookie('user_id');
   }

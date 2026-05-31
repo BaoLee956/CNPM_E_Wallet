@@ -7,12 +7,12 @@ import { TransactionTable } from "@/components/history/TransactionTable";
 import { TransactionSkeleton } from "@/components/history/TransactionSkeleton";
 import { Pagination } from "@/components/ui/Table";
 import { useTransactions } from "@/hooks/useTransactions";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { Button } from "@/components/ui";
 
 export default function HistoryPage() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const {
     transactions,
     total,
@@ -25,6 +25,14 @@ export default function HistoryPage() {
     setFilters,
     resetFilters,
   } = useTransactions();
+
+  if (authLoading) {
+    return (
+      <CustomerPage>
+        <TransactionSkeleton />
+      </CustomerPage>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

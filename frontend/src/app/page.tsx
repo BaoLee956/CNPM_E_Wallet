@@ -40,7 +40,7 @@ export default function LandingPage() {
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Link
               href="/auth/login"
-              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-brand-default px-6 py-3 text-sm font-semibo shadow-lg shadow-brand-default/30 transition-all hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-default/40"
+              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-brand-default px-6 py-3 text-sm font-semibold shadow-lg shadow-brand-default/30 transition-all hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-default/40"
             >
               <span className="relative z-10 flex items-center gap-2 text-white">
                 Get Started

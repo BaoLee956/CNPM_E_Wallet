@@ -1,6 +1,6 @@
 // hooks/useTransactions.ts
 import { useEffect, useState, useCallback } from "react";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "./useAuth"; 
 import {
   getTransactions,
   type TransactionFilters,
@@ -10,7 +10,7 @@ import type { Transaction } from "@/models/transaction";
 import { useToast } from "./useToast";
 
 export function useTransactions() {
-  const { wallet, isAuthenticated } = useAuthStore();
+  const { wallet, isAuthenticated } = useAuth(); 
   const { showToast } = useToast();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);

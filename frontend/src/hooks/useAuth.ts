@@ -20,12 +20,6 @@ export function useAuth() {
     updateWallet,
   } = useAuthStore();
 
-  useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
-      checkAuth();
-    }
-  }, []);
-
   const refreshWallet = async () => {
     const freshWallet = await walletService.getWallet();
     if (freshWallet) updateWallet(freshWallet);

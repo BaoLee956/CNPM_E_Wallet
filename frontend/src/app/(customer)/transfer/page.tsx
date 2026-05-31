@@ -1,28 +1,18 @@
 // app/transfer/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
 import { CustomerPage } from "@/components/ui";
 import { TransferForm } from "@/components/transfer/TransferForm";
 import { TransferSuccess } from "@/components/transfer/TransferSuccess";
 import { TransferSkeleton } from "@/components/transfer/TransferSkeleton";
 import { useTransfer } from "@/hooks/useTransfer";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function TransferPage() {
   const { executeTransfer, isLoading, error, result, reset } = useTransfer();
-  const { isAuthenticated, checkAuth } = useAuthStore();
-  const [pageLoading, setPageLoading] = useState(true);
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
-  useEffect(() => {
-    const init = async () => {
-      await checkAuth();
-      setPageLoading(false);
-    };
-    init();
-  }, [checkAuth]);
-
-  if (pageLoading || !isAuthenticated) {
+  if (authLoading || !isAuthenticated) {
     return (
       <CustomerPage>
         <TransferSkeleton />

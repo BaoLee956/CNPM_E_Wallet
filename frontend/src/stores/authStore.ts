@@ -1,7 +1,12 @@
 // stores/authStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { authService, type LoginCredentials, type RegisterData, type AuthResponse } from "@/services/authService";
+import {
+  authService,
+  type LoginCredentials,
+  type RegisterData,
+  type AuthResponse,
+} from "@/services/authService";
 import type { User } from "@/models/user";
 import type { Wallet } from "@/models/wallet";
 
@@ -22,7 +27,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       wallet: null,
       isLoading: false,
@@ -54,7 +59,12 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         set({ isLoading: true });
         await authService.logout();
-        set({ user: null, wallet: null, isAuthenticated: false, isLoading: false });
+        set({
+          user: null,
+          wallet: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
       },
 
       checkAuth: async () => {
@@ -63,9 +73,19 @@ export const useAuthStore = create<AuthState>()(
         if (isValid) {
           const user = await authService.getCurrentUser();
           const wallet = await authService.getCurrentWallet();
-          set({ user, wallet, isAuthenticated: !!user, isLoading: false });
+          set({
+            user,
+            wallet,
+            isAuthenticated: !!user,
+            isLoading: false,
+          });
         } else {
-          set({ user: null, wallet: null, isAuthenticated: false, isLoading: false });
+          set({
+            user: null,
+            wallet: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
         }
       },
 
@@ -77,7 +97,6 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         wallet: state.wallet,
-        isAuthenticated: state.isAuthenticated,
       }),
     }
   )
