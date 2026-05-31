@@ -1,42 +1,26 @@
 // app/transfer/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
 import { CustomerPage } from "@/components/ui";
 import { TransferForm } from "@/components/transfer/TransferForm";
 import { TransferSuccess } from "@/components/transfer/TransferSuccess";
 import { TransferSkeleton } from "@/components/transfer/TransferSkeleton";
 import { useTransfer } from "@/hooks/useTransfer";
-import { useAuthStore } from "@/stores/authStore";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 export default function TransferPage() {
   const { executeTransfer, isLoading, error, result, reset } = useTransfer();
-  const { isAuthenticated, checkAuth } = useAuthStore();
-  const [pageLoading, setPageLoading] = useState(true);
 
-  useEffect(() => {
-    const init = async () => {
-      await checkAuth();
-      setPageLoading(false);
-    };
-    init();
-  }, [checkAuth]);
+  // ✅ Dùng useRequireAuth thay vì useAuth
+  const { isAuthenticated, isLoading: authLoading } = useRequireAuth();
 
-  if (pageLoading || !isAuthenticated) {
+  if (authLoading || !isAuthenticated) {
     return (
       <CustomerPage>
         <TransferSkeleton />
       </CustomerPage>
     );
   }
-
-  const handleTransfer = async (data: any) => {
-    await executeTransfer(data);
-  };
-
-  const handleReset = () => {
-    reset();
-  };
 
   return (
     <CustomerPage>
@@ -49,10 +33,10 @@ export default function TransferPage() {
         </div>
 
         {result ? (
-          <TransferSuccess result={result} onReset={handleReset} />
+          <TransferSuccess result={result} onReset={reset} />
         ) : (
           <TransferForm
-            onSubmit={handleTransfer}
+            onSubmit={executeTransfer}
             isLoading={isLoading}
             error={error}
           />

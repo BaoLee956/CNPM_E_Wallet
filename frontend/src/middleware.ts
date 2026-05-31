@@ -11,7 +11,6 @@ const authRoutes = ['/auth/login', '/auth/register'];
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Lấy token từ cookie (đã set trong authService)
   const token = request.cookies.get('auth_token')?.value;
   const isAuthenticated = !!token;
 

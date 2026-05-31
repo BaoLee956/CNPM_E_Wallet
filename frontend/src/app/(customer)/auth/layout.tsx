@@ -2,17 +2,16 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { useAuthStore } from "@/stores/authStore";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, checkAuth, isLoading } = useAuthStore();
+  const { isAuthenticated, checkAuth, isLoading } = useAuth();
 
   useEffect(() => {
     checkAuth();
@@ -23,6 +22,16 @@ export default function AuthLayout({
       router.replace("/home");
     }
   }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-dvh bg-surface-bg flex items-center justify-center">
+        <div className="h-8 w-8 rounded-full border-2 border-brand-default border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) return null;
 
   return (
     <div className="min-h-dvh bg-surface-bg flex items-center justify-center p-4">
