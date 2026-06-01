@@ -5,10 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { TopUpDto } from './dto/wallets.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class WalletsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notificationsService: NotificationsService,
+  ) {}
 
   async topUp(userId: string, dto: TopUpDto) {
     const wallet = await this.prisma.wallet.findFirst({

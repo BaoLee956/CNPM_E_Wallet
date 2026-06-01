@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma.service';
-import { ChangePasswordDto } from './dto/users.dto';
+import { ChangePasswordDto, QueryCustomerTransactionsDto } from './dto/users.dto';
 
 @Injectable()
 export class UsersService {
@@ -72,5 +72,52 @@ export class UsersService {
     });
 
     return { message: 'Đổi mật khẩu thành công' };
+  }
+
+  // GET /api/v1/customer/transactions
+  async getTransactions(userId: string, query: QueryCustomerTransactionsDto) {
+    const { type, page = 1, limit = 10 } = query;
+    const skip = (page - 1) * limit;
+
+    const where: any = { userId };
+
+    if (type) {
+      where.type = type;
+    }
+
+    const [transactions, total] = await Promise.all([
+      this.prisma.transaction.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          amount: true,
+          fee: true,
+          currency: true,
+          description: true,
+          recipientName: true,
+          senderName: true,
+          referenceCode: true,
+          createdAt: true,
+          completedAt: true,
+        },
+      }),
+      this.prisma.transaction.count({ where }),
+    ]);
+
+    return {
+      message: 'Lấy lịch sử giao dịch thành công',
+      data: transactions,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 }
