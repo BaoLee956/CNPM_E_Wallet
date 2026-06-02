@@ -1,65 +1,134 @@
 // services/walletService.ts
-import type { Wallet } from "@/models/wallet";
+import http from '@/lib/http';
+import type { Wallet } from '@/models/wallet';
 
-const MOCK_USERS_KEY = "mock_users";
-const WALLET_KEY = "ewallet_wallet";
+// ─── Response types ────────────────────────────────────────────────────────
 
-function loadMockUsers() {
-  if (typeof window === "undefined") return {};
-  const stored = localStorage.getItem(MOCK_USERS_KEY);
-  return stored ? JSON.parse(stored) : {};
+interface WalletApiResponse {
+  message: string;
+  data: Wallet;
 }
 
-function saveMockUsers(users: any) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+export interface TopUpPayload {
+  amount: number;
+  method?: 'bank_transfer' | 'credit_card' | 'debit_card' | 'voucher';
+  description?: string;
 }
+
+export interface WithdrawPayload {
+  amount: number;
+  description?: string;
+}
+
+export interface TransferPayload {
+  toAccountNumber: string;
+  amount: number;
+  description?: string;
+}
+
+export interface PaymentPayload {
+  amount: number;
+  type: 'bill' | 'merchant' | 'subscription';
+  merchantId?: string;
+  billCode?: string;
+  description?: string;
+}
+
+export interface UpdateLimitsPayload {
+  dailyLimit?: number;
+  monthlyLimit?: number;
+}
+
+export interface TransactionResult {
+  id: string;
+  type: string;
+  amount: number;
+  status: string;
+  createdAt: string;
+}
+
+export interface TopUpResult {
+  message: string;
+  data: {
+    transaction: TransactionResult;
+    wallet: Pick<Wallet, 'id' | 'balance'>;
+  };
+}
+
+export interface WithdrawResult {
+  message: string;
+  data: {
+    transaction: TransactionResult;
+    wallet: Pick<Wallet, 'id' | 'balance'>;
+  };
+}
+
+export interface TransferResult {
+  message: string;
+  data: {
+    transferId: string;
+    amount: number;
+    recipient: { name: string; accountNumber: string };
+    transaction: TransactionResult;
+    wallet: Pick<Wallet, 'id' | 'balance'>;
+  };
+}
+
+export interface PaymentResult {
+  message: string;
+  data: {
+    paymentId: string;
+    transaction: TransactionResult;
+    wallet: Pick<Wallet, 'id' | 'balance'>;
+  };
+}
+
+export interface UpdateLimitsResult {
+  message: string;
+  data: Pick<Wallet, 'id' | 'dailyLimit' | 'monthlyLimit' | 'currentDailyUsage' | 'currentMonthlyUsage'>;
+}
+
+// ─── Service ───────────────────────────────────────────────────────────────
 
 class WalletService {
+  // GET /api/v1/wallets/me
   async getWallet(): Promise<Wallet | null> {
-    if (typeof window === "undefined") return null;
-    const walletStr = localStorage.getItem(WALLET_KEY);
-    return walletStr ? JSON.parse(walletStr) : null;
+    try {
+      const { data } = await http.get<WalletApiResponse>('/api/v1/wallets/me');
+      return data.data;
+    } catch {
+      return null;
+    }
   }
 
-  async updateBalance(amount: number, type: "deposit" | "withdraw" | "transfer"): Promise<Wallet> {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    let wallet = await this.getWallet();
-    if (!wallet) throw new Error("Wallet not found");
+  // POST /api/v1/wallets/top-up
+  async topUp(payload: TopUpPayload): Promise<TopUpResult> {
+    const { data } = await http.post<TopUpResult>('/api/v1/wallets/top-up', payload);
+    return data;
+  }
 
-    let newBalance = wallet.balance;
-    if (type === "deposit") newBalance += amount;
-    else if (type === "withdraw" || type === "transfer") {
-      if (wallet.balance < amount) throw new Error("Insufficient balance");
-      newBalance -= amount;
-    }
+  // POST /api/v1/wallets/withdraw
+  async withdraw(payload: WithdrawPayload): Promise<WithdrawResult> {
+    const { data } = await http.post<WithdrawResult>('/api/v1/wallets/withdraw', payload);
+    return data;
+  }
 
-    // Cập nhật cả currentDailyUsage nếu cần (giả lập)
-    const today = new Date().toISOString().slice(0, 10);
-    // Ở đây mock đơn giản: chỉ tăng currentDailyUsage nếu type không phải deposit
-    let newDailyUsage = wallet.currentDailyUsage || 0;
-    if (type !== "deposit") {
-      newDailyUsage += amount;
-    }
+  // POST /api/v1/wallets/transfer
+  async transfer(payload: TransferPayload): Promise<TransferResult> {
+    const { data } = await http.post<TransferResult>('/api/v1/wallets/transfer', payload);
+    return data;
+  }
 
-    const updatedWallet: Wallet = {
-      ...wallet,
-      balance: newBalance,
-      currentDailyUsage: newDailyUsage,
-      updatedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(WALLET_KEY, JSON.stringify(updatedWallet));
+  // POST /api/v1/wallets/payment
+  async payment(payload: PaymentPayload): Promise<PaymentResult> {
+    const { data } = await http.post<PaymentResult>('/api/v1/wallets/payment', payload);
+    return data;
+  }
 
-    // Also update in mock users storage for consistency
-    const users = loadMockUsers();
-    for (const email in users) {
-      if (users[email].wallet.id === wallet.id) {
-        users[email].wallet = updatedWallet;
-        break;
-      }
-    }
-    saveMockUsers(users);
-    return updatedWallet;
+  // PATCH /api/v1/wallets/limits
+  async updateLimits(payload: UpdateLimitsPayload): Promise<UpdateLimitsResult> {
+    const { data } = await http.patch<UpdateLimitsResult>('/api/v1/wallets/limits', payload);
+    return data;
   }
 }
 

@@ -22,6 +22,7 @@ interface AuthState {
   updateWallet: (wallet: Wallet) => void;
   updateUser: (user: User) => void;
   setHasHydrated: (val: boolean) => void;
+  refreshWallet: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -96,6 +97,11 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
           });
         }
+      },
+
+      refreshWallet: async () => {
+        const wallet = await walletService.getWallet();
+        if (wallet) set({ wallet });
       },
 
       clearError: () => set({ error: null }),
