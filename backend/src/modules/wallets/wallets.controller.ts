@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, UseGuards, Request } from '@nestjs/common';
 import { WalletsService } from './wallets.service';
 import { TopUpDto } from './dto/wallets.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -12,5 +12,10 @@ export class WalletsController {
   @Post('top-up')
   topUp(@Request() req: any, @Body() dto: TopUpDto) {
     return this.walletsService.topUp(req.user.id, dto);
+  }
+
+  @Get('me')
+  getMyWallet(@Request() req: any) {
+    return this.walletsService.getMyWallet(req.user.id);
   }
 }
