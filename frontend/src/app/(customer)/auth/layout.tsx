@@ -14,10 +14,6 @@ export default function AuthLayout({
   const router = useRouter();
   const { isAuthenticated, checkAuth, isLoading } = useAuth();
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
   const hasHydrated = useAuthStore((s) => s._hasHydrated);
 
   useEffect(() => {
