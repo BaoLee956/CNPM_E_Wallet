@@ -2,18 +2,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Input, Card } from "@/components/ui";
-import { useToast } from "@/hooks/useToast";
+import { Button, Input } from "@/components/ui";
 
 interface ProfileFormProps {
   initialName: string;
   initialEmail: string;
   initialPhone: string;
-  onSubmit: (data: {
-    name: string;
-    email: string;
-    phone: string;
-  }) => Promise<void>;
+  onSubmit: (data: { name: string }) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -25,49 +20,50 @@ export function ProfileForm({
   isLoading,
 }: ProfileFormProps) {
   const [name, setName] = useState(initialName);
-  const [email, setEmail] = useState(initialEmail);
-  const [phone, setPhone] = useState(initialPhone);
-  const { showToast } = useToast();
+
+  const isDirty = name.trim() !== initialName.trim();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await onSubmit({ name, email, phone });
-      showToast("Profile updated successfully", "success");
-    } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : "Update failed",
-        "error"
-      );
-    }
+    if (!isDirty) return;
+    await onSubmit({ name });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
-        label="Full Name"
+        label="Họ và tên"
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
-        placeholder="Your full name"
+        placeholder="Nguyễn Văn A"
       />
+
       <Input
-        label="Email Address"
+        label="Email"
         type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        placeholder="you@example.com"
+        value={initialEmail}
+        readOnly
+        disabled
+        className="cursor-not-allowed opacity-60"
       />
+
       <Input
-        label="Phone Number"
+        label="Số điện thoại"
         type="tel"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="+84 XXX XXX XXX"
+        value={initialPhone}
+        readOnly
+        disabled
+        className="cursor-not-allowed opacity-60"
       />
-      <Button type="submit" loading={isLoading} fullWidth>
-        Save Changes
+
+      <Button
+        type="submit"
+        loading={isLoading}
+        fullWidth
+        disabled={!isDirty || isLoading}
+      >
+        Lưu thay đổi
       </Button>
     </form>
   );

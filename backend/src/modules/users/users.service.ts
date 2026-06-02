@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma.service';
-import { ChangePasswordDto, QueryCustomerTransactionsDto } from './dto/users.dto';
+import { ChangePasswordDto, UpdateProfileDto, QueryCustomerTransactionsDto } from './dto/users.dto';
 
 @Injectable()
 export class UsersService {
@@ -44,6 +44,44 @@ export class UsersService {
     return {
       message: 'Lấy thông tin thành công',
       data: user,
+    };
+  }
+
+  // PUT /api/v1/customer/profile
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data: { name: dto.name },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phoneNumber: true,
+        avatar: true,
+        role: true,
+        isEmailVerified: true,
+        isPhoneVerified: true,
+        twoFactorEnabled: true,
+        lastLoginAt: true,
+        createdAt: true,
+        wallets: {
+          select: {
+            id: true,
+            accountNumber: true,
+            balance: true,
+            currency: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    return {
+      message: 'Cập nhật thông tin thành công',
+      data: updated,
     };
   }
 
