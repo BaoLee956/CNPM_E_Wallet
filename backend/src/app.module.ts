@@ -5,6 +5,7 @@ import { WalletsModule } from './modules/wallets/wallets.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { MockModule } from './modules/mock/mock.module';
 import { UsersModule } from './modules/users/users.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UsersModule } from './modules/users/users.module';
     AdminModule,
     MockModule,
     UsersModule,
+    NotificationsModule,
   ], // Sau này AuthModule sẽ được import vào đây
 })
 export class AppModule {}
