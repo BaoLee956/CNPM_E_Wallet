@@ -1,4 +1,3 @@
-// components/auth/LoginForm.tsx
 "use client";
 
 import { useSearchParams } from "next/navigation";
@@ -7,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, Input, Card } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
-import { Mail, Lock, LogIn, LogOut } from "lucide-react";
+import { Phone, Lock, LogIn, LogOut } from "lucide-react";
 
 const AUTH_STORAGE_KEY = "auth-storage";
 
@@ -32,19 +31,18 @@ export function LoginForm({ initialHasSession = false }: LoginFormProps) {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || "/home";
   const { login, isLoading, error, clearError, logout } = useAuth();
-  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
 
   const checkStoredAuth = useCallback(() => {
     const stored = getStoredAuth();
-    return !!(stored?.user);
+    return !!stored?.user;
   }, []);
 
-  // Use initial value from server-rendered prop, then verify on client
-  const [hasExistingSession, setHasExistingSession] = useState(initialHasSession);
+  const [hasExistingSession, setHasExistingSession] =
+    useState(initialHasSession);
 
   useEffect(() => {
-    // Re-check on client in case localStorage changed since SSR
     setHasExistingSession(checkStoredAuth());
   }, [checkStoredAuth]);
 
@@ -52,7 +50,7 @@ export function LoginForm({ initialHasSession = false }: LoginFormProps) {
     e.preventDefault();
     clearError();
     try {
-      await login({ email, password });
+      await login({ phoneNumber, password });
       router.push(redirectTo);
     } catch {
       // error handled in store
@@ -62,7 +60,7 @@ export function LoginForm({ initialHasSession = false }: LoginFormProps) {
   const handleLogout = async () => {
     await logout();
     setHasExistingSession(false);
-    setEmail("");
+    setPhoneNumber("");
     setPassword("");
   };
 
@@ -78,7 +76,6 @@ export function LoginForm({ initialHasSession = false }: LoginFormProps) {
       </div>
 
       {hasExistingSession ? (
-        // Already authenticated notice
         <div className="space-y-4">
           <div className="bg-brand-subtle/50 border border-brand-border rounded-2xl p-5 text-center">
             <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-brand-subtle mb-3">
@@ -89,9 +86,6 @@ export function LoginForm({ initialHasSession = false }: LoginFormProps) {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-brand-default"
               >
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
@@ -101,7 +95,7 @@ export function LoginForm({ initialHasSession = false }: LoginFormProps) {
               You are already signed in
             </h3>
             <p className="text-xs text-secondary mt-1">
-              You have an active session. Sign out to use a different account.
+              Sign out to use a different account.
             </p>
           </div>
           <div className="flex gap-3">
@@ -122,17 +116,16 @@ export function LoginForm({ initialHasSession = false }: LoginFormProps) {
           </div>
         </div>
       ) : (
-        // Login form
         <form onSubmit={handleSubmit} className="space-y-5">
           <Input
-            label="Email Address"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            iconLeft={<Mail size={16} />}
+            label="Phone Number"
+            type="tel"
+            placeholder="0912345678"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            iconLeft={<Phone size={16} />}
             required
-            autoComplete="email"
+            autoComplete="tel"
           />
 
           <Input
@@ -164,7 +157,7 @@ export function LoginForm({ initialHasSession = false }: LoginFormProps) {
           </Button>
 
           <div className="text-center text-sm text-secondary">
-            Don&apos;t have an account?{" "}
+            Don't have an account?{" "}
             <Link
               href="/auth/register"
               className="text-brand-default hover:underline font-medium"

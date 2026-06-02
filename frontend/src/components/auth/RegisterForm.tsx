@@ -6,12 +6,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button, Input, Card } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
-import { Mail, Lock, User, UserPlus } from "lucide-react";
+import { Mail, Lock, User, UserPlus, Phone } from "lucide-react";
 
 export function RegisterForm() {
   const router = useRouter();
   const { register, isLoading, error, clearError } = useAuth();
   const [name, setName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -31,7 +32,7 @@ export function RegisterForm() {
     if (!validateForm()) return;
     clearError();
     try {
-      await register({ email, password, name });
+      await register({ name, phoneNumber, email, password });
       router.push("/home");
     } catch (err) {
       // error handled by store
@@ -57,6 +58,16 @@ export function RegisterForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           iconLeft={<User size={16} />}
+          required
+        />
+
+        <Input
+          label="Phone Number"
+          type="tel"
+          placeholder="0912345678"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+          iconLeft={<Phone size={16} />}
           required
         />
 

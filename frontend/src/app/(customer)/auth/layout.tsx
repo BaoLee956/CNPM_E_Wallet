@@ -14,10 +14,6 @@ export default function AuthLayout({
   const router = useRouter();
   const { isAuthenticated, checkAuth, isLoading } = useAuth();
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
   const hasHydrated = useAuthStore((s) => s._hasHydrated);
 
   useEffect(() => {
@@ -34,8 +30,6 @@ export default function AuthLayout({
       </div>
     );
   }
-
-  if (isAuthenticated) return null;
 
   return (
     <div className="min-h-dvh bg-surface-bg flex items-center justify-center p-4">
