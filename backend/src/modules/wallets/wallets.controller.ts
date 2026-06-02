@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, UseGuards, Request, Query } from '@nestjs/common';
 import { WalletsService } from './wallets.service';
 import {
   TopUpDto,
@@ -18,6 +18,24 @@ export class WalletsController {
   @Get('me')
   getMyWallet(@Request() req: any) {
     return this.walletsService.getMyWallet(req.user.id);
+  }
+
+  @Get('me/transactions')
+  async getTransactions(
+    @Request() req: any,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('type') type?: string,
+    @Query('search') search?: string,
+  ) {
+    const result = await this.walletsService.getTransactions(
+      req.user.id,
+      page ? +page : 1,
+      limit ? +limit : 10,
+      type,
+      search,
+    );
+    return { message: 'Lấy danh sách giao dịch thành công', data: result.data, total: result.total };
   }
 
   // POST /api/v1/wallets/top-up

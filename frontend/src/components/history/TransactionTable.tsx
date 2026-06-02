@@ -77,8 +77,11 @@ function buildColumns(currentWalletId?: string): Column<Transaction>[] {
         const displayType = getDisplayType(row, currentWalletId);
         const isNegative = displayType === "send" || displayType === "payment";
         return (
-          <span className={`font-mono font-medium ${isNegative ? "text-danger" : "text-success"}`}>
-            {isNegative ? "−" : "+"} {row.amount.toLocaleString()} {row.currency}
+          <span
+            className={`whitespace-nowrap font-mono font-medium ${isNegative ? "text-danger" : "text-success"}`}
+          >
+            {isNegative ? "−" : "+"} {row.amount.toLocaleString()}{" "}
+            {row.currency}
           </span>
         );
       },
@@ -88,7 +91,10 @@ function buildColumns(currentWalletId?: string): Column<Transaction>[] {
       header: "Status",
       align: "center",
       accessor: (row) => {
-        const variantMap: Record<string, "success" | "warning" | "danger" | "default"> = {
+        const variantMap: Record<
+          string,
+          "success" | "warning" | "danger" | "default"
+        > = {
           completed: "success",
           success: "success",
           pending: "warning",
@@ -101,7 +107,10 @@ function buildColumns(currentWalletId?: string): Column<Transaction>[] {
           failed: "Failed",
         };
         return (
-          <Badge variant={variantMap[row.status as string] ?? "default"} size="sm">
+          <Badge
+            variant={variantMap[row.status as string] ?? "default"}
+            size="sm"
+          >
             {labelMap[row.status as string] ?? row.status}
           </Badge>
         );

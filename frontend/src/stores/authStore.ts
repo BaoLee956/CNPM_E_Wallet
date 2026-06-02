@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { authService, type LoginCredentials, type RegisterData } from "@/services/authService";
+import { walletService } from "@/services/walletService";
 import type { User } from "@/models/user";
 import type { Wallet } from "@/models/wallet";
 import { useToast } from "@/hooks/useToast"; 

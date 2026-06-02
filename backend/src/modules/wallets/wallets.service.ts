@@ -463,4 +463,73 @@ export class WalletsService {
       data: updatedWallet,
     };
   }
+
+
+  async getTransactions(
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+    type?: string,
+    search?: string,
+  ) {
+    const wallet = await this.getActiveWallet(userId);
+    const skip = (page - 1) * limit;
+
+    const where: any = { walletId: wallet.id };
+
+    if (type && type !== 'all') {
+      if (type === 'send') {
+        where.type = 'transfer';
+        where.fromWalletId = wallet.id;
+      } else if (type === 'receive') {
+        where.type = 'transfer';
+        where.toWalletId = wallet.id;
+      } else if (type === 'topup') {
+        where.type = 'deposit';
+      } else if (type === 'payment') {
+        where.type = 'payment';
+      }
+    }
+
+    if (search && search.trim()) {
+      where.OR = [
+        { description: { contains: search, mode: 'insensitive' } },
+        { referenceCode: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const [transactions, total] = await this.prisma.$transaction([
+      this.prisma.transaction.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        // KHÔNG include fromWallet/toWallet vì không có relation
+      }),
+      this.prisma.transaction.count({ where }),
+    ]);
+
+    // Lấy danh sách các walletId liên quan (fromWalletId, toWalletId)
+    const walletIds = new Set<string>();
+    for (const tx of transactions) {
+      if (tx.fromWalletId) walletIds.add(tx.fromWalletId);
+      if (tx.toWalletId) walletIds.add(tx.toWalletId);
+    }
+
+    // Query một lần tất cả wallets để lấy accountNumber
+    const wallets = await this.prisma.wallet.findMany({
+      where: { id: { in: Array.from(walletIds) } },
+      select: { id: true, accountNumber: true },
+    });
+    const walletMap = new Map(wallets.map(w => [w.id, w.accountNumber]));
+
+    // Gắn accountNumber vào từng transaction
+    const enriched = transactions.map(tx => ({
+      ...tx,
+      fromWalletAccountNumber: tx.fromWalletId ? walletMap.get(tx.fromWalletId) || null : null,
+      toWalletAccountNumber: tx.toWalletId ? walletMap.get(tx.toWalletId) || null : null,
+    }));
+
+    return { data: enriched, total };
+  }
 }
