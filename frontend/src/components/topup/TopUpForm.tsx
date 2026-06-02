@@ -1,50 +1,36 @@
 // components/topup/TopUpForm.tsx
 "use client";
-
 import { useState } from "react";
 import { Button, Input, Select, Card } from "@/components/ui";
-import type { TopUpMethod, TopUpData } from "@/services/topUpService";
+import { type TopUpPayload } from "@/services/walletService";
 
 interface TopUpFormProps {
-  onSubmit: (data: TopUpData) => Promise<void>;
+  onSubmit: (data: TopUpPayload) => Promise<void>;
   isLoading: boolean;
   error: string | null;
 }
 
 const methodOptions = [
-  { value: "card", label: "💳 Credit / Debit Card" },
   { value: "bank_transfer", label: "🏦 Bank Transfer" },
-  { value: "ewallet", label: "📱 E-Wallet (MoMo, ZaloPay)" },
+  { value: "credit_card", label: "💳 Credit Card" },
+  { value: "debit_card", label: "💳 Debit Card" },
+  { value: "voucher", label: "🎫 Voucher" },
 ];
 
 export function TopUpForm({ onSubmit, isLoading, error }: TopUpFormProps) {
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState<TopUpMethod>("card");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [bankCode, setBankCode] = useState("");
+  const [method, setMethod] = useState<TopUpPayload["method"]>("bank_transfer");
+  const [description, setDescription] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const numAmount = parseFloat(amount.replace(/,/g, ""));
-    if (isNaN(numAmount) || numAmount <= 0) {
-      // error handled by toast in hook
-      return;
-    }
-    const data: TopUpData = {
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) return;
+    await onSubmit({
       amount: numAmount,
       method,
-      ...(method === "card" && { cardNumber, expiry, cvv }),
-      ...(method === "bank_transfer" && { bankCode }),
-    };
-    await onSubmit(data);
-  };
-
-  const formatAmount = (value: string) => {
-    const num = parseFloat(value.replace(/,/g, ""));
-    if (isNaN(num)) return "";
-    return num.toLocaleString("vi-VN");
+      description: description.trim() || undefined,
+    });
   };
 
   return (
@@ -52,75 +38,30 @@ export function TopUpForm({ onSubmit, isLoading, error }: TopUpFormProps) {
       <form onSubmit={handleSubmit} className="space-y-5">
         <Input
           label="Amount (VND)"
-          type="text"
-          value={amount ? formatAmount(amount) : ""}
-          onChange={(e) => setAmount(e.target.value.replace(/,/g, ""))}
-          placeholder="e.g., 100,000"
+          type="number"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="e.g., 100000"
           required
+          min="10000"
+          step="10000"
           hint="Minimum 10,000 VND, maximum 50,000,000 VND"
         />
-
         <Select
           label="Payment Method"
           options={methodOptions}
           value={method}
-          onChange={(e) => setMethod(e.target.value as TopUpMethod)}
+          onChange={(e) => setMethod(e.target.value as any)}
         />
-
-        {method === "card" && (
-          <div className="space-y-4 rounded-lg border border-subtle p-4">
-            <Input
-              label="Card Number"
-              value={cardNumber}
-              onChange={(e) => setCardNumber(e.target.value)}
-              placeholder="1234 5678 9012 3456"
-              required
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Expiry (MM/YY)"
-                value={expiry}
-                onChange={(e) => setExpiry(e.target.value)}
-                placeholder="MM/YY"
-                required
-              />
-              <Input
-                label="CVV"
-                type="password"
-                value={cvv}
-                onChange={(e) => setCvv(e.target.value)}
-                placeholder="123"
-                required
-              />
-            </div>
-          </div>
-        )}
-
-        {method === "bank_transfer" && (
-          <Select
-            label="Select Bank"
-            options={[
-              { value: "VCB", label: "Vietcombank" },
-              { value: "TCB", label: "Techcombank" },
-              { value: "BIDV", label: "BIDV" },
-              { value: "VNPAY", label: "VNPay" },
-            ]}
-            value={bankCode}
-            onChange={(e) => setBankCode(e.target.value)}
-            required
-          />
-        )}
-
-        {method === "ewallet" && (
-          <div className="rounded-lg border border-subtle p-4 text-center text-secondary text-sm">
-            You will be redirected to the e-wallet app to complete payment.
-          </div>
-        )}
-
+        <Input
+          label="Description (optional)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="e.g., Top up for shopping"
+        />
         {error && (
           <div className="text-danger text-sm text-center">{error}</div>
         )}
-
         <Button type="submit" loading={isLoading} fullWidth>
           Continue to Pay
         </Button>

@@ -4,6 +4,7 @@
 import { useEffect } from "react";
 import type { Transaction } from "@/models/transaction";
 import { Badge } from "@/components/ui";
+import type { Wallet } from "@/models/wallet";
 import {
   X,
   ArrowUpRight,
@@ -252,11 +253,27 @@ export function TransactionDetailModal({
               )}
 
               {transaction.fromWalletId && (
-                <Row label="Từ ví" value={transaction.fromWalletId} mono />
+                <Row
+                  label="Từ ví (số TK)"
+                  value={
+                    transaction.fromWalletAccountNumber
+                      ? transaction.fromWalletAccountNumber
+                      : transaction.fromWalletId.slice(0, 8) + "..."
+                  }
+                  mono
+                />
               )}
 
               {transaction.toWalletId && (
-                <Row label="Đến ví" value={transaction.toWalletId} mono />
+                <Row
+                  label="Đến ví (số TK)"
+                  value={
+                    transaction.toWalletAccountNumber
+                      ? transaction.toWalletAccountNumber
+                      : transaction.toWalletId.slice(0, 8) + "..."
+                  }
+                  mono
+                />
               )}
 
               {transaction.fee !== undefined && transaction.fee > 0 && (

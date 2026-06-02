@@ -94,12 +94,14 @@ export default function HistoryPage() {
               // ← Truyền handler để mở detail modal khi click row
               onRowClick={(tx) => setSelectedTx(tx)}
             />
-            <Pagination
-              page={page}
-              pageSize={pageSize}
-              total={total}
-              onPageChange={setPage}
-            />
+            {total > pageSize && (
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                total={total}
+                onPageChange={setPage}
+              />
+            )}
           </>
         )}
       </div>

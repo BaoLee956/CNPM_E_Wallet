@@ -19,13 +19,8 @@ export function useAuth() {
     clearError,
     updateWallet,
     updateUser,
+    refreshWallet,
   } = useAuthStore();
-
-  const refreshWallet = async () => {
-    const freshWallet = await walletService.getWallet();
-    if (freshWallet) updateWallet(freshWallet);
-    return freshWallet;
-  };
 
   const redirectToDashboard = () => router.push("/home");
   const redirectToLogin = () => router.push("/auth/login");
@@ -46,5 +41,6 @@ export function useAuth() {
     redirectToLogin,
     updateWallet,
     updateUser,
+    refreshWallet,
   };
 }

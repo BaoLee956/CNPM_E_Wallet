@@ -3,7 +3,7 @@
 
 import { Button, Card } from "@/components/ui";
 import { CheckCircle } from "lucide-react";
-import type { TopUpResult } from "@/services/topUpService";
+import type { TopUpResult } from "@/services/walletService";
 
 interface TopUpSuccessProps {
   result: TopUpResult;

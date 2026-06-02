@@ -1,7 +1,7 @@
 // hooks/useTopUp.ts
 import { useState } from "react";
 import { useAuth } from "./useAuth";
-import { topUpService, type TopUpData, type TopUpResult } from "@/services/topUpService";
+import { walletService, type TopUpPayload, type TopUpResult } from "@/services/walletService";
 import { useToast } from "./useToast";
 
 export function useTopUp() {
@@ -11,17 +11,18 @@ export function useTopUp() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<TopUpResult | null>(null);
 
-  const executeTopUp = async (data: TopUpData) => {
+  const executeTopUp = async (data: TopUpPayload) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await topUpService.topUp(data);
-      setResult(res);
-      await refreshWallet(); // Cập nhật số dư mới trong store
-      showToast(res.message, "success");
-      return res;
+      const topUpResult = await walletService.topUp(data);
+      setResult(topUpResult); 
+      // Refresh wallet ở background để không làm chậm UI
+      refreshWallet().catch(err => console.warn("Refresh wallet failed:", err));
+      showToast(topUpResult.message, "success");
+      return topUpResult;
     } catch (err: any) {
-      const msg = err.message || "Top-up failed";
+      const msg = err.response?.data?.message || err.message || "Nạp tiền thất bại";
       setError(msg);
       showToast(msg, "error");
       throw err;
@@ -31,8 +32,8 @@ export function useTopUp() {
   };
 
   const reset = () => {
-    setError(null);
     setResult(null);
+    setError(null);
   };
 
   return { executeTopUp, isLoading, error, result, reset };

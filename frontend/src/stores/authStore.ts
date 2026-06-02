@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { authService, type LoginCredentials, type RegisterData } from "@/services/authService";
+import { walletService } from "@/services/walletService";
 import type { User } from "@/models/user";
 import type { Wallet } from "@/models/wallet";
 import { useToast } from "@/hooks/useToast"; 
@@ -22,6 +23,7 @@ interface AuthState {
   updateWallet: (wallet: Wallet) => void;
   updateUser: (user: User) => void;
   setHasHydrated: (val: boolean) => void;
+  refreshWallet: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -96,6 +98,11 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
           });
         }
+      },
+
+      refreshWallet: async () => {
+        const wallet = await walletService.getWallet();
+        if (wallet) set({ wallet });
       },
 
       clearError: () => set({ error: null }),

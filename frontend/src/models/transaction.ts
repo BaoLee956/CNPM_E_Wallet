@@ -24,6 +24,8 @@ export interface Transaction extends Timestamps {
   // transfer-specific fields (used by TransferSuccess display)
   fromWalletId?: string;
   toWalletId?: string;
+  fromWalletAccountNumber?: string | null;
+  toWalletAccountNumber?: string | null;
   recipientName?: string;
   senderName?: string;
 }

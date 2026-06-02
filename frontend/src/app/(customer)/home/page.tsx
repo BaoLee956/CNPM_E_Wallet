@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import {
-  loadTransactions,
+  getTransactions,
   normalizeTransactionType,
 } from "@/services/transactionService";
 import {
@@ -227,13 +227,11 @@ export default function HomePage() {
 
   useEffect(() => {
     if (wallet?.id) {
-      setRecentTxs(loadTransactions(wallet.id).slice(0, 4));
+      getTransactions(wallet.id, { type: "all", search: "" }, 1, 4)
+        .then(({ data }) => setRecentTxs(data))
+        .catch(console.error);
     }
   }, [wallet?.id]);
-
-  useEffect(() => {
-    bankService.getLinkedBanks().then(setLinkedBanks);
-  }, []);
 
   const getGreeting = () => {
     const h = new Date().getHours();

@@ -1,9 +1,8 @@
 // components/transfer/TransferSuccess.tsx
 "use client";
-
 import { Card, Button } from "@/components/ui";
 import { CheckCircle } from "lucide-react";
-import type { TransferResult } from "@/services/transferService";
+import type { TransferResult } from "@/services/walletService";
 
 interface TransferSuccessProps {
   result: TransferResult;
@@ -11,15 +10,16 @@ interface TransferSuccessProps {
 }
 
 export function TransferSuccess({ result, onReset }: TransferSuccessProps) {
+  const { data } = result;
   const formattedAmount = new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
-  }).format(result.transaction.amount);
+  }).format(data.amount);
 
   const formattedNewBalance = new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
-  }).format(result.newBalance);
+  }).format(data.wallet.balance);
 
   return (
     <Card padding="lg" className="w-full text-center">
@@ -41,14 +41,16 @@ export function TransferSuccess({ result, onReset }: TransferSuccessProps) {
         <div className="flex justify-between">
           <span className="text-secondary text-sm">To Account</span>
           <span className="font-mono text-sm">
-            {result.transaction.toWalletId}
+            {data.recipient.accountNumber}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-secondary text-sm">Reference</span>
-          <span className="font-mono text-sm">
-            {result.transaction.referenceId}
-          </span>
+          <span className="text-secondary text-sm">Recipient</span>
+          <span className="font-mono text-sm">{data.recipient.name}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-secondary text-sm">Transfer ID</span>
+          <span className="font-mono text-sm">{data.transferId}</span>
         </div>
         <div className="border-t border-subtle pt-2 mt-2">
           <div className="flex justify-between">
