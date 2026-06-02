@@ -35,8 +35,6 @@ export default function AuthLayout({
     );
   }
 
-  if (isAuthenticated) return null;
-
   return (
     <div className="min-h-dvh bg-surface-bg flex items-center justify-center p-4">
       <div className="w-full max-w-120 md:max-w-130 lg:max-w-140 transition-all">

@@ -1,14 +1,10 @@
 // stores/authStore.ts
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {
-  authService,
-  type LoginCredentials,
-  type RegisterData,
-  type AuthResponse,
-} from "@/services/authService";
+import { authService, type LoginCredentials, type RegisterData } from "@/services/authService";
 import type { User } from "@/models/user";
 import type { Wallet } from "@/models/wallet";
+import { useToast } from "@/hooks/useToast"; 
 
 interface AuthState {
   user: User | null;
@@ -30,7 +26,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       wallet: null,
       isLoading: false,
@@ -43,8 +39,11 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { user, wallet } = await authService.login(credentials);
           set({ user, wallet, isAuthenticated: true, isLoading: false });
+          useToast.getState().showToast("Đăng nhập thành công!", "success");
         } catch (error: any) {
-          set({ error: error.message, isLoading: false });
+          const message = error.message;
+          set({ error: message, isLoading: false });
+          useToast.getState().showToast(message, "error");
           throw error;
         }
       },
@@ -54,8 +53,11 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { user, wallet } = await authService.register(data);
           set({ user, wallet, isAuthenticated: true, isLoading: false });
+          useToast.getState().showToast("Đăng ký thành công!", "success");
         } catch (error: any) {
-          set({ error: error.message, isLoading: false });
+          const message = error.message;
+          set({ error: message, isLoading: false });
+          useToast.getState().showToast(message, "error");
           throw error;
         }
       },
@@ -69,14 +71,17 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           isLoading: false,
         });
+        useToast.getState().showToast("Đã đăng xuất", "info");
       },
 
       checkAuth: async () => {
         set({ isLoading: true });
         const isValid = await authService.verifyToken();
         if (isValid) {
-          const user = await authService.getCurrentUser();
-          const wallet = await authService.getCurrentWallet();
+          const [user, wallet] = await Promise.all([
+            authService.getCurrentUser(),
+            authService.getCurrentWallet(),
+          ]);
           set({
             user,
             wallet,
