@@ -58,4 +58,32 @@ export class WalletsService {
       },
     };
   }
+
+  async getMyWallet(userId: string) {
+    const wallet = await this.prisma.wallet.findFirst({
+      where: { userId },
+      select: {
+        id: true,
+        accountNumber: true,
+        balance: true,
+        currency: true,
+        isActive: true,
+        dailyLimit: true,
+        monthlyLimit: true,
+        currentDailyUsage: true,
+        currentMonthlyUsage: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!wallet) {
+      throw new NotFoundException('Không tìm thấy ví của bạn');
+    }
+
+    return {
+      message: 'Lấy thông tin ví thành công',
+      data: wallet,
+    };
+  }
 }
