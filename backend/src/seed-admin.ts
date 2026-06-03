@@ -1,13 +1,8 @@
-import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
-import { PrismaPg } from "@prisma/adapter-pg";
-import "dotenv/config";
+require('dotenv/config');
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
 
-const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:Hungbao2005@localhost:5432/postgres',
-});
-
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
   const adminPhone = '0383572367';
@@ -15,14 +10,14 @@ async function main() {
   const adminPassword = 'AdminPassword123';
   const adminName = 'System Administrator';
 
-  console.log('Đang kiểm tra tài khoản Admin...');
+  console.log('Dang kiem tra tai khoan Admin...');
 
   const existingAdmin = await prisma.user.findUnique({
     where: { phoneNumber: adminPhone },
   });
 
   if (existingAdmin) {
-    console.log('❌ Thất bại: Tài khoản Admin với số điện thoại này đã tồn tại!');
+    console.log('Tai khoan Admin da ton tai - bo qua.');
     return;
   }
 
@@ -47,17 +42,17 @@ async function main() {
   });
 
   console.log('--------------------------------------------------');
-  console.log('🎉 TẠO TÀI KHOẢN ADMIN THÀNH CÔNG!');
-  console.log(`- Họ tên   : ${admin.name}`);
-  console.log(`- SĐT      : ${admin.phoneNumber}`);
-  console.log(`- Email    : ${admin.email}`);
-  console.log(`- Mật khẩu: ${adminPassword}`);
+  console.log('TAO TAI KHOAN ADMIN THANH CONG!');
+  console.log('- Ho ten   : ' + admin.name);
+  console.log('- SDT      : ' + admin.phoneNumber);
+  console.log('- Email    : ' + admin.email);
+  console.log('- Mat khau: ' + adminPassword);
   console.log('--------------------------------------------------');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Lỗi khi chạy seed:', e);
+    console.error('Loi khi chay seed:', e);
     process.exit(1);
   })
   .finally(async () => {
