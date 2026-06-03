@@ -7,6 +7,7 @@ import { LayoutDashboard, Users, ArrowLeftRight, BarChart3, ChevronLeft, Bell, L
 import { useAdminStore } from "@/stores/adminStore";
 import { AdminToast } from "@/components/ui/AdminToast";
 import { NotificationBell } from "@/components/admin/NotificationBell";
+import { adminAuthService } from "@/services/admin/authService";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -23,15 +24,15 @@ export default function AdminRootLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
-  const { toast, clearToast } = useAdminStore();
+  const { toast, clearToast, adminName, adminEmail, notifications } = useAdminStore();
 
-  // Redirect to admin login if not authenticated
+  // Auth guard — redirect to login if not authenticated
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const session = sessionStorage.getItem("admin_session");
-      if (!session && !pathname.endsWith("/login")) {
-        router.replace("/login");
-      }
+    if (pathname.includes("/login")) return;
+    const session = adminAuthService.getSession();
+    const token = localStorage.getItem("ewallet_token");
+    if (!session && !token) {
+      router.replace("/login");
     }
   }, [pathname, router]);
 
@@ -39,6 +40,13 @@ export default function AdminRootLayout({
   useEffect(() => {
     document.documentElement.classList.add("dark");
   }, []);
+
+  const handleLogout = () => {
+    adminAuthService.clearSession();
+    router.push("/login");
+  };
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-100">
@@ -117,12 +125,12 @@ export default function AdminRootLayout({
           {/* Admin info */}
           <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl mt-1 ${collapsed ? "justify-center" : ""}`}>
             <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-lg">
-              A
+              {adminName.charAt(0).toUpperCase()}
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white truncate">Super Admin</p>
-                <p className="text-[10px] text-slate-500 truncate">admin@ewallet.vn</p>
+                <p className="text-xs font-semibold text-white truncate">{adminName}</p>
+                <p className="text-[10px] text-slate-500 truncate">{adminEmail}</p>
               </div>
             )}
           </div>
@@ -139,11 +147,7 @@ export default function AdminRootLayout({
             <NotificationBell />
             <div className="h-6 w-px bg-slate-700 mx-1" />
             <button
-              onClick={() => {
-                sessionStorage.removeItem("admin_session");
-                localStorage.removeItem("auth-storage");
-                router.push("/login");
-              }}
+              onClick={handleLogout}
               className="flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-medium text-slate-400 hover:bg-slate-800 hover:text-rose-400 transition-colors"
             >
               <LogOut size={14} />
