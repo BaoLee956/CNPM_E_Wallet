@@ -4,12 +4,11 @@
 import { useEffect } from "react";
 import type { Transaction } from "@/models/transaction";
 import { Badge } from "@/components/ui";
-import type { Wallet } from "@/models/wallet";
 import {
   X,
   ArrowUpRight,
   ArrowDownLeft,
-  Wallet,
+  Wallet as WalletIcon,
   CreditCard,
   Clock,
   Hash,
@@ -60,7 +59,7 @@ const typeConfig: Record<
   },
   topup: {
     label: "Nạp tiền",
-    icon: <Wallet size={22} />,
+    icon: <WalletIcon size={22} />,
     iconBg: "bg-info-light text-info",
     amountColor: "text-success",
     sign: "+",

@@ -22,11 +22,11 @@ export function TopUpSuccess({ result, onReset }: TopUpSuccessProps) {
             {new Intl.NumberFormat("vi-VN", {
               style: "currency",
               currency: "VND",
-            }).format(result.newBalance)}
+            }).format(result.data.wallet.balance)}
           </span>
         </p>
         <p className="text-xs text-tertiary">
-          Transaction ID: {result.transactionId}
+          Transaction ID: {result.data.transaction.id}
         </p>
         <div className="flex gap-3 mt-2">
           <Button onClick={onReset} variant="outline">
