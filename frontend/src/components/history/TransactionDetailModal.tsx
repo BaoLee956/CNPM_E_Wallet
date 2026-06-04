@@ -17,6 +17,7 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  Banknote,
 } from "lucide-react";
 
 interface TransactionDetailModalProps {
@@ -31,6 +32,7 @@ function getDisplayType(tx: Transaction, currentWalletId?: string): string {
   }
   if (tx.type === "deposit" || tx.type === "DEPOSIT") return "topup";
   if (tx.type === "payment" || tx.type === "PAYMENT") return "payment";
+  if (tx.type === "withdraw" || tx.type === "WITHDRAW") return "withdraw";
   return tx.type as string;
 }
 
@@ -69,6 +71,13 @@ const typeConfig: Record<
     label: "Thanh toán",
     icon: <CreditCard size={22} />,
     iconBg: "bg-warning-light text-warning",
+    amountColor: "text-danger",
+    sign: "−",
+  },
+  withdraw: {
+    label: "Rút tiền",
+    icon: <Banknote size={22} />,
+    iconBg: "bg-danger-light text-danger",
     amountColor: "text-danger",
     sign: "−",
   },
@@ -292,6 +301,17 @@ export function TransactionDetailModal({
 
               {transaction.recipientName && (
                 <Row label="Người nhận" value={transaction.recipientName} />
+              )}
+
+              {(transaction as any).bankName && (
+                <Row label="Ngân hàng" value={(transaction as any).bankName} />
+              )}
+              {(transaction as any).accountNumber && (
+                <Row
+                  label="Số tài khoản"
+                  value={`**** ${(transaction as any).accountNumber.slice(-4)}`}
+                  mono
+                />
               )}
 
               <Row label="Mã giao dịch" value={transaction.id} mono />
