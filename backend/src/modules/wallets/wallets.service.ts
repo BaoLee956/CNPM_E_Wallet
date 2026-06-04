@@ -6,6 +6,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { GatewayService } from '../gateway/gateway.service';
+import { LinkedBanksService } from '../linked-banks/linked-banks.service';
 import {
   TopUpDto,
   WithdrawDto,
@@ -14,29 +16,32 @@ import {
   UpdateWalletLimitsDto,
 } from './dto/wallets.dto';
 
+const WALLET_CALLBACK_BASE = process.env.APP_URL || 'http://localhost:3000';
+
 @Injectable()
 export class WalletsService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private gateway: GatewayService,
+    private linkedBanksService: LinkedBanksService,
   ) {}
-
-  // ─── Helper: lấy ví và kiểm tra hợp lệ ────────────────────────────────
+ 
+  // ─── Helper: lấy ví và kiểm tra hợp lệ ──────────────────────────────
   private async getActiveWallet(userId: string) {
     const wallet = await this.prisma.wallet.findFirst({ where: { userId } });
     if (!wallet) throw new NotFoundException('Không tìm thấy ví. Vui lòng liên hệ hỗ trợ.');
     if (!wallet.isActive) throw new ForbiddenException('Ví đã bị khóa. Không thể thực hiện giao dịch.');
     return wallet;
   }
-
-  // ─── Helper: kiểm tra giới hạn giao dịch ──────────────────────────────
+ 
+  // ─── Helper: kiểm tra giới hạn giao dịch ─────────────────────────────
   private checkLimits(
     wallet: { dailyLimit: number | null; monthlyLimit: number | null; currentDailyUsage: number | null; currentMonthlyUsage: number | null },
     amount: number,
   ) {
     const dailyUsage = wallet.currentDailyUsage ?? 0;
     const monthlyUsage = wallet.currentMonthlyUsage ?? 0;
-
     if (wallet.dailyLimit && dailyUsage + amount > wallet.dailyLimit) {
       throw new BadRequestException(
         `Vượt hạn mức giao dịch trong ngày. Còn lại: ${(wallet.dailyLimit - dailyUsage).toLocaleString()} VND`,
@@ -48,160 +53,241 @@ export class WalletsService {
       );
     }
   }
-
-  // ─── GET /api/v1/wallets/me ────────────────────────────────────────────
+ 
+  // ─── GET /api/v1/wallets/me ──────────────────────────────────────────
   async getMyWallet(userId: string) {
     const wallet = await this.prisma.wallet.findFirst({
       where: { userId },
       select: {
-        id: true,
-        accountNumber: true,
-        balance: true,
-        currency: true,
-        isActive: true,
-        dailyLimit: true,
-        monthlyLimit: true,
-        currentDailyUsage: true,
-        currentMonthlyUsage: true,
-        createdAt: true,
-        updatedAt: true,
+        id: true, accountNumber: true, balance: true, currency: true,
+        isActive: true, dailyLimit: true, monthlyLimit: true,
+        currentDailyUsage: true, currentMonthlyUsage: true,
+        createdAt: true, updatedAt: true,
       },
     });
     if (!wallet) throw new NotFoundException('Không tìm thấy ví của bạn');
     return { message: 'Lấy thông tin ví thành công', data: wallet };
   }
-
-  // ─── POST /api/v1/wallets/top-up ──────────────────────────────────────
-  // Tạo record trong bảng `top_ups` + `transactions` (Prisma transaction)
+ 
+  // ─── GET transaction by ID (dùng cho FE polling) ─────────────────────
+  async getTransaction(userId: string, transactionId: string) {
+    const tx = await this.prisma.transaction.findFirst({
+      where: { id: transactionId, userId },
+    });
+    if (!tx) throw new NotFoundException('Không tìm thấy giao dịch');
+    return { message: 'OK', data: tx };
+  }
+ 
+  // ─── POST /api/v1/wallets/top-up ────────────────────────────────────
   async topUp(userId: string, dto: TopUpDto) {
     const wallet = await this.getActiveWallet(userId);
-    const method = (dto.method ?? 'bank_transfer') as any;
-    const description = dto.description ?? `Nạp tiền vào ví`;
-
-    const result = await this.prisma.$transaction(async (tx) => {
-      // 1. Tạo Transaction record trước để lấy id
-      const transaction = await tx.transaction.create({
+ 
+    // ── Gateway flow: nạp tiền từ TK ngân hàng ──────────────────────
+    if (dto.linkedBankId) {
+      const linkedBank = await this.linkedBanksService.getLinkedBankById(userId, dto.linkedBankId);
+      const description = dto.description ?? `Nạp tiền từ ${linkedBank.bankCode} *${linkedBank.accountNumber.slice(-4)}`;
+ 
+      // Tạo transaction ở trạng thái PENDING trước
+      const transaction = await this.prisma.transaction.create({
         data: {
           userId,
           walletId: wallet.id,
           type: 'deposit',
-          status: 'success',
+          status: 'pending',   // ← pending, chờ webhook
           amount: dto.amount,
           fee: 0,
           currency: 'VND',
           description,
-          completedAt: new Date(),
         },
       });
-
-      // 2. Tạo TopUp record, liên kết transactionId
-      const topUp = await tx.topUp.create({
+ 
+      // Tạo gateway transaction record để đối soát
+      await this.prisma.gatewayTransaction.create({
         data: {
           userId,
           walletId: wallet.id,
-          amount: dto.amount,
-          method,
-          status: 'success',
           transactionId: transaction.id,
-          completedAt: new Date(),
+          type: 'debit',
+          bankCode: linkedBank.bankCode,
+          accountNumber: linkedBank.accountNumber,
+          amount: dto.amount,
+          status: 'pending',
+          gatewayRef: transaction.id,
         },
       });
-
-      // 3. Cộng tiền vào ví
+ 
+      // Gọi gateway (non-blocking: gateway sẽ webhook về sau ~2s)
+      try {
+        await this.gateway.debit({
+          bankCode: linkedBank.bankCode,
+          accountNumber: linkedBank.accountNumber,
+          amount: dto.amount,
+          referenceId: transaction.id,
+          callbackUrl: `${WALLET_CALLBACK_BASE}/api/v1/gateway/webhook`,
+        });
+      } catch (err) {
+        // Nếu gateway từ chối ngay (VD: số dư không đủ) → fail transaction
+        await this.prisma.transaction.update({
+          where: { id: transaction.id },
+          data: { status: 'failed', failureReason: (err as Error).message },
+        });
+        throw err;
+      }
+ 
+      return {
+        message: 'Yêu cầu nạp tiền đã được gửi. Vui lòng đợi xác nhận.',
+        data: {
+          transactionId: transaction.id,
+          status: 'pending',
+          amount: dto.amount,
+          bankCode: linkedBank.bankCode,
+          accountNumber: linkedBank.accountNumber,
+        },
+      };
+    }
+ 
+    // ── Instant flow (giữ nguyên hành vi cũ) ────────────────────────
+    const method = (dto.method ?? 'bank_transfer') as any;
+    const description = dto.description ?? `Nạp tiền vào ví`;
+ 
+    const result = await this.prisma.$transaction(async (tx) => {
+      const transaction = await tx.transaction.create({
+        data: { userId, walletId: wallet.id, type: 'deposit', status: 'success', amount: dto.amount, fee: 0, currency: 'VND', description, completedAt: new Date() },
+      });
+      await tx.topUp.create({
+        data: { userId, walletId: wallet.id, amount: dto.amount, method, status: 'success', transactionId: transaction.id, completedAt: new Date() },
+      });
       const updatedWallet = await tx.wallet.update({
         where: { id: wallet.id },
         data: { balance: { increment: dto.amount } },
       });
-
-      return { transaction, topUp, updatedWallet };
+      return { transaction, updatedWallet };
     });
-
-    // Push notification (ngoài transaction để không block)
+ 
     this.notificationsService.createUserNotification({
-      userId,
-      title: 'Nạp tiền thành công',
+      userId, title: 'Nạp tiền thành công',
       message: `Bạn đã nạp ${dto.amount.toLocaleString('vi-VN')} VND vào ví.`,
       type: 'success',
     }).catch(() => {});
-
+ 
     return {
       message: 'Nạp tiền thành công',
       data: {
-        transaction: {
-          id: result.transaction.id,
-          type: result.transaction.type,
-          amount: result.transaction.amount,
-          status: result.transaction.status,
-          createdAt: result.transaction.createdAt,
-        },
-        wallet: {
-          id: result.updatedWallet.id,
-          balance: result.updatedWallet.balance,
-        },
+        transactionId: result.transaction.id,
+        status: 'success',
+        amount: dto.amount,
+        wallet: { id: result.updatedWallet.id, balance: result.updatedWallet.balance },
       },
     };
   }
-
-  // ─── POST /api/v1/wallets/withdraw ────────────────────────────────────
-  // Rút tiền: chỉ cần bảng `transactions` (không có bảng riêng cho withdraw)
+ 
+  // ─── POST /api/v1/wallets/withdraw ──────────────────────────────────
   async withdraw(userId: string, dto: WithdrawDto) {
     const wallet = await this.getActiveWallet(userId);
-
     if (wallet.balance < dto.amount) {
       throw new BadRequestException('Số dư không đủ để thực hiện giao dịch');
     }
     this.checkLimits(wallet, dto.amount);
-
-    const description = dto.description ?? `Rút tiền khỏi ví`;
-
-    const result = await this.prisma.$transaction(async (tx) => {
-      const transaction = await tx.transaction.create({
+ 
+    // ── Gateway flow: rút tiền ra TK ngân hàng ──────────────────────
+    if (dto.linkedBankId) {
+      const linkedBank = await this.linkedBanksService.getLinkedBankById(userId, dto.linkedBankId);
+      const description = dto.description ?? `Rút tiền về ${linkedBank.bankCode} *${linkedBank.accountNumber.slice(-4)}`;
+ 
+      const result = await this.prisma.$transaction(async (tx) => {
+        // Tạo transaction → success ngay (tiền đã rời ví)
+        // Webhook chỉ confirm phía ngân hàng đã nhận
+        const transaction = await tx.transaction.create({
+          data: {
+            userId, walletId: wallet.id,
+            type: 'withdraw', status: 'success',
+            amount: dto.amount, fee: 0, currency: 'VND',
+            description, completedAt: new Date(),
+          },
+        });
+ 
+        // Trừ tiền ví ngay
+        const updatedWallet = await tx.wallet.update({
+          where: { id: wallet.id },
+          data: {
+            balance: { decrement: dto.amount },
+            currentDailyUsage: { increment: dto.amount },
+            currentMonthlyUsage: { increment: dto.amount },
+          },
+        });
+ 
+        // Tạo gateway record
+        await tx.gatewayTransaction.create({
+          data: {
+            userId, walletId: wallet.id,
+            transactionId: transaction.id,
+            type: 'credit',
+            bankCode: linkedBank.bankCode,
+            accountNumber: linkedBank.accountNumber,
+            amount: dto.amount,
+            status: 'pending',
+          },
+        });
+ 
+        return { transaction, updatedWallet };
+      });
+ 
+      // Gọi gateway credit (async, không chờ)
+      this.gateway.credit({
+        bankCode: linkedBank.bankCode,
+        accountNumber: linkedBank.accountNumber,
+        amount: dto.amount,
+        referenceId: result.transaction.id,
+        callbackUrl: `${WALLET_CALLBACK_BASE}/api/v1/gateway/webhook`,
+      }).catch((err) => {
+        // Log lỗi, có thể cần retry queue ở production
+        console.error(`Gateway credit failed for tx ${result.transaction.id}:`, err.message);
+      });
+ 
+      this.notificationsService.createUserNotification({
+        userId, title: 'Rút tiền đang xử lý',
+        message: `${dto.amount.toLocaleString('vi-VN')} VND đang được chuyển về ${linkedBank.bankCode}.`,
+        type: 'info',
+      }).catch(() => {});
+ 
+      return {
+        message: 'Rút tiền thành công. Tiền sẽ về tài khoản ngân hàng trong vài phút.',
         data: {
-          userId,
-          walletId: wallet.id,
-          type: 'withdraw',
+          transactionId: result.transaction.id,
           status: 'success',
           amount: dto.amount,
-          fee: 0,
-          currency: 'VND',
-          description,
-          completedAt: new Date(),
+          bankCode: linkedBank.bankCode,
+          wallet: { id: result.updatedWallet.id, balance: result.updatedWallet.balance },
         },
+      };
+    }
+ 
+    // ── Instant withdraw (giữ nguyên) ────────────────────────────────
+    const description = dto.description ?? `Rút tiền khỏi ví`;
+    const result = await this.prisma.$transaction(async (tx) => {
+      const transaction = await tx.transaction.create({
+        data: { userId, walletId: wallet.id, type: 'withdraw', status: 'success', amount: dto.amount, fee: 0, currency: 'VND', description, completedAt: new Date() },
       });
-
       const updatedWallet = await tx.wallet.update({
         where: { id: wallet.id },
-        data: {
-          balance: { decrement: dto.amount },
-          currentDailyUsage: { increment: dto.amount },
-          currentMonthlyUsage: { increment: dto.amount },
-        },
+        data: { balance: { decrement: dto.amount }, currentDailyUsage: { increment: dto.amount }, currentMonthlyUsage: { increment: dto.amount } },
       });
-
       return { transaction, updatedWallet };
     });
-
+ 
     this.notificationsService.createUserNotification({
-      userId,
-      title: 'Rút tiền thành công',
+      userId, title: 'Rút tiền thành công',
       message: `Bạn đã rút ${dto.amount.toLocaleString('vi-VN')} VND khỏi ví.`,
       type: 'info',
     }).catch(() => {});
-
+ 
     return {
       message: 'Rút tiền thành công',
       data: {
-        transaction: {
-          id: result.transaction.id,
-          type: result.transaction.type,
-          amount: result.transaction.amount,
-          status: result.transaction.status,
-          createdAt: result.transaction.createdAt,
-        },
-        wallet: {
-          id: result.updatedWallet.id,
-          balance: result.updatedWallet.balance,
-        },
+        transactionId: result.transaction.id,
+        status: 'success',
+        amount: dto.amount,
+        wallet: { id: result.updatedWallet.id, balance: result.updatedWallet.balance },
       },
     };
   }

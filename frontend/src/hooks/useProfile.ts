@@ -2,57 +2,47 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { profileService, UpdateProfileData, ChangePasswordData } from "@/services/profileService";
+import { useAuthStore } from "@/stores/authStore";
 
 export function useProfile() {
-  const { user, updateUser, refreshWallet } = useAuth(); 
-  const [loading, setLoading] = useState(false);
+  const { user, isLoading } = useAuth();
+  const updateUser = useAuthStore((s) => s.updateUser);
+  const refreshWallet = useAuthStore((s) => s.refreshWallet);
+
   const [updating, setUpdating] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const updateProfile = useCallback(
     async (data: UpdateProfileData) => {
-      if (!user?.id) return;
       setUpdating(true);
-      setError(null);
       try {
-        const updated = await profileService.updateProfile(user.id, data);
-        updateUser(updated); 
-        await refreshWallet();
+        const updated = await profileService.updateProfile(data);
+        // Sync ngược về global store để mọi component đều thấy data mới
+        updateUser(updated as any);
         return updated;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Update failed");
-        throw err;
       } finally {
         setUpdating(false);
       }
     },
-    [user, updateUser, refreshWallet]
+    [updateUser]
   );
 
-  const changePassword = useCallback(
-    async (data: ChangePasswordData) => {
-      if (!user?.id) return;
-      setChangingPassword(true);
-      setError(null);
-      try {
-        await profileService.changePassword(user.id, data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Password change failed");
-        throw err;
-      } finally {
-        setChangingPassword(false);
-      }
-    },
-    [user]
-  );
+  const changePassword = useCallback(async (data: ChangePasswordData) => {
+    setChangingPassword(true);
+    try {
+      await profileService.changePassword(data);
+    } finally {
+      setChangingPassword(false);
+    }
+  }, []);
 
   return {
-    user, 
+    user,
+    isLoading,
     updating,
     changingPassword,
-    error,
     updateProfile,
     changePassword,
+    refreshWallet,
   };
 }
