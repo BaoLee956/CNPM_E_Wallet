@@ -1,0 +1,159 @@
+{
+  "accounts": [
+    {
+      "id": "VCB_0123456789",
+      "bankCode": "VCB",
+      "accountNumber": "0123456789",
+      "accountName": "NGUYEN VAN A",
+      "balance": 49400000,
+      "phone": "0901234578",
+      "maskedPhone": "****4578"
+    },
+    {
+      "id": "VCB_0987654321",
+      "bankCode": "VCB",
+      "accountNumber": "0987654321",
+      "accountName": "TRAN THI B",
+      "balance": 20000000,
+      "phone": "0912345679",
+      "maskedPhone": "****5679"
+    },
+    {
+      "id": "TCB_1234567890",
+      "bankCode": "TCB",
+      "accountNumber": "1234567890",
+      "accountName": "LE VAN C",
+      "balance": 29980000,
+      "phone": "0923456780",
+      "maskedPhone": "****6780"
+    },
+    {
+      "id": "BIDV_2345678901",
+      "bankCode": "BIDV",
+      "accountNumber": "2345678901",
+      "accountName": "PHAM THI D",
+      "balance": 15000000,
+      "phone": "0934567891",
+      "maskedPhone": "****7891"
+    },
+    {
+      "id": "VTB_3456789012",
+      "bankCode": "VTB",
+      "accountNumber": "3456789012",
+      "accountName": "HOANG VAN E",
+      "balance": 80000000,
+      "phone": "0945678902",
+      "maskedPhone": "****8902"
+    },
+    {
+      "id": "ACB_4567890123",
+      "bankCode": "ACB",
+      "accountNumber": "4567890123",
+      "accountName": "VU THI F",
+      "balance": 25000000,
+      "phone": "0956789013",
+      "maskedPhone": "****9013"
+    },
+    {
+      "id": "MB_5678901234",
+      "bankCode": "MB",
+      "accountNumber": "5678901234",
+      "accountName": "DO VAN G",
+      "balance": 10000000,
+      "phone": "0967890124",
+      "maskedPhone": "****0124"
+    },
+    {
+      "id": "VPB_6789012345",
+      "bankCode": "VPB",
+      "accountNumber": "6789012345",
+      "accountName": "NGO THI H",
+      "balance": 45000000,
+      "phone": "0978901235",
+      "maskedPhone": "****1235"
+    },
+    {
+      "id": "TPB_7890123456",
+      "bankCode": "TPB",
+      "accountNumber": "7890123456",
+      "accountName": "BUI VAN I",
+      "balance": 30000000,
+      "phone": "0989012346",
+      "maskedPhone": "****2346"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "50e39e3d-7904-4d9c-a180-94d0eedfbe49",
+      "type": "debit",
+      "bankCode": "VCB",
+      "accountNumber": "0123456789",
+      "amount": 200000,
+      "status": "success",
+      "referenceId": "6b0eaf8c-8329-499b-9191-a6f5e5500ab3",
+      "callbackUrl": "http://localhost:3000/api/v1/gateway/webhook",
+      "createdAt": "2026-06-04T01:46:14.668Z",
+      "completedAt": "2026-06-04T01:46:14.718Z",
+      "callbackSentAt": "2026-06-04T01:46:17.368Z",
+      "callbackStatus": "sent"
+    },
+    {
+      "id": "53a17167-d05b-4b38-be6e-4f3d6364cd8d",
+      "type": "debit",
+      "bankCode": "VCB",
+      "accountNumber": "0123456789",
+      "amount": 200000,
+      "status": "success",
+      "referenceId": "658b9448-f1d3-4abf-b875-36e2d6fd6122",
+      "callbackUrl": "http://localhost:3000/api/v1/gateway/webhook",
+      "createdAt": "2026-06-04T01:50:23.943Z",
+      "completedAt": "2026-06-04T01:50:23.972Z",
+      "callbackSentAt": "2026-06-04T01:50:27.194Z",
+      "callbackStatus": "sent"
+    },
+    {
+      "id": "9c6538b5-8ff2-4ae1-91b0-1aeb8ff6e445",
+      "type": "debit",
+      "bankCode": "VCB",
+      "accountNumber": "0123456789",
+      "amount": 200000,
+      "status": "success",
+      "referenceId": "7bc3f3a1-6e79-40c7-8bed-7387b0478644",
+      "callbackUrl": "http://localhost:3000/api/v1/gateway/webhook",
+      "createdAt": "2026-06-04T02:13:23.243Z",
+      "completedAt": "2026-06-04T02:13:23.282Z",
+      "callbackSentAt": "2026-06-04T02:13:25.913Z",
+      "callbackStatus": "sent"
+    },
+    {
+      "id": "e878003c-1d1b-4de9-b3c0-efbf5254d5bf",
+      "type": "debit",
+      "bankCode": "TCB",
+      "accountNumber": "1234567890",
+      "amount": 5020000,
+      "status": "success",
+      "referenceId": "5772137f-1309-41a8-8fe9-d3522045b74d",
+      "callbackUrl": "http://localhost:3000/api/v1/gateway/webhook",
+      "createdAt": "2026-06-04T02:16:57.420Z",
+      "completedAt": "2026-06-04T02:16:57.456Z",
+      "callbackSentAt": "2026-06-04T02:16:59.908Z",
+      "callbackStatus": "sent"
+    }
+  ],
+  "otpRecords": [
+    {
+      "bankCode": "VCB",
+      "accountNumber": "0123456789",
+      "code": "123456",
+      "expiresAt": "2026-06-04T01:50:39.807Z",
+      "used": true
+    },
+    {
+      "bankCode": "TCB",
+      "accountNumber": "1234567890",
+      "code": "123456",
+      "expiresAt": "2026-06-04T02:19:47.506Z",
+      "used": true
+    }
+  ]
+}
