@@ -5,7 +5,12 @@ import { Table, Badge } from "@/components/ui";
 import type { Column } from "@/components/ui/Table";
 import type { Transaction } from "@/models/transaction";
 import { TransactionType, TransactionStatus } from "@/models/common";
-import { ArrowUpRight, ArrowDownLeft, CreditCard } from "lucide-react";
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  CreditCard,
+  Banknote,
+} from "lucide-react";
 
 interface TransactionTableProps {
   data: Transaction[];
@@ -20,6 +25,7 @@ function getDisplayType(tx: Transaction, currentWalletId?: string): string {
   }
   if (tx.type === "deposit" || tx.type === "DEPOSIT") return "topup";
   if (tx.type === "payment" || tx.type === "PAYMENT") return "payment";
+  if (tx.type === "withdraw" || tx.type === "WITHDRAW") return "withdraw";
   return tx.type as string;
 }
 
@@ -39,6 +45,8 @@ const getTypeIcon = (type: string) => {
       return <ArrowDownLeft size={14} className="text-success" />;
     case "payment":
       return <CreditCard size={14} className="text-warning" />;
+    case "withdraw":
+      return <Banknote size={14} className="text-danger" />;
     default:
       return null;
   }
@@ -50,6 +58,7 @@ const getTypeLabel = (displayType: string) => {
     receive: "Receive",
     topup: "Topup",
     payment: "Payment",
+    withdraw: "Withdraw",
   };
   return map[displayType] ?? displayType;
 };
@@ -75,7 +84,10 @@ function buildColumns(currentWalletId?: string): Column<Transaction>[] {
       align: "right",
       accessor: (row) => {
         const displayType = getDisplayType(row, currentWalletId);
-        const isNegative = displayType === "send" || displayType === "payment";
+        const isNegative =
+          displayType === "send" ||
+          displayType === "payment" ||
+          displayType === "withdraw";
         return (
           <span
             className={`whitespace-nowrap font-mono font-medium ${isNegative ? "text-danger" : "text-success"}`}

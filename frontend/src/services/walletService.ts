@@ -11,12 +11,14 @@ interface WalletApiResponse {
 
 export interface TopUpPayload {
   amount: number;
+  linkedBankId?: string;
   method?: 'bank_transfer' | 'credit_card' | 'debit_card' | 'voucher';
   description?: string;
 }
 
 export interface WithdrawPayload {
   amount: number;
+  linkedBankId?: string;
   description?: string;
 }
 

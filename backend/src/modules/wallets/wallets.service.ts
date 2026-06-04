@@ -574,6 +574,8 @@ export class WalletsService {
         where.type = 'deposit';
       } else if (type === 'payment') {
         where.type = 'payment';
+      } else if (type === 'withdraw') {   
+        where.type = 'withdraw';
       }
     }
 

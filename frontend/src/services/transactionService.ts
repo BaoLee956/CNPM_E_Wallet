@@ -3,7 +3,7 @@ import http from '@/lib/http';
 import type { Transaction } from '@/models/transaction';
 
 export interface TransactionFilters {
-  type: "all" | "send" | "receive" | "topup" | "payment";
+  type: "all" | "send" | "receive" | "topup" | "payment" | "withdraw";
   search: string;
 }
 

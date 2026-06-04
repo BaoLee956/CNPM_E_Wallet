@@ -337,10 +337,13 @@ export default function HomePage() {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button className="relative flex h-11 w-11 items-center justify-center rounded-full bg-surface-sunken text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-primary">
+            <Link
+              href="/notifications"
+              className="relative flex h-11 w-11 items-center justify-center rounded-full bg-surface-sunken text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-primary"
+            >
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-danger border-2 border-white shadow-sm" />
-            </button>
+            </Link>
             <button
               onClick={async () => {
                 await logout();

@@ -14,7 +14,7 @@
       "bankCode": "VCB",
       "accountNumber": "0987654321",
       "accountName": "TRAN THI B",
-      "balance": 20000000,
+      "balance": 19200000,
       "phone": "0912345679",
       "maskedPhone": "****5679"
     },
@@ -138,21 +138,84 @@
       "completedAt": "2026-06-04T02:16:57.456Z",
       "callbackSentAt": "2026-06-04T02:16:59.908Z",
       "callbackStatus": "sent"
+    },
+    {
+      "id": "4ef87c73-9d24-47c6-a0fe-b3da84691e4d",
+      "type": "debit",
+      "bankCode": "VCB",
+      "accountNumber": "0987654321",
+      "amount": 2000000,
+      "status": "success",
+      "referenceId": "2af5d2d7-54e1-4eb8-b3c1-ca5995d9261b",
+      "callbackUrl": "http://localhost:3000/api/v1/gateway/webhook",
+      "createdAt": "2026-06-04T06:19:07.069Z",
+      "completedAt": "2026-06-04T06:19:07.117Z",
+      "callbackSentAt": "2026-06-04T06:19:09.554Z",
+      "callbackStatus": "sent"
+    },
+    {
+      "id": "3c81c096-1a00-4984-9ae3-f541878303fa",
+      "type": "credit",
+      "bankCode": "VCB",
+      "accountNumber": "0987654321",
+      "amount": 1000000,
+      "status": "success",
+      "referenceId": "ac80142a-bafc-407e-80c5-80b00aa649a2",
+      "callbackUrl": "http://localhost:3000/api/v1/gateway/webhook",
+      "createdAt": "2026-06-04T06:21:42.923Z",
+      "completedAt": "2026-06-04T06:21:42.954Z",
+      "callbackSentAt": "2026-06-04T06:21:45.214Z",
+      "callbackStatus": "sent"
+    },
+    {
+      "id": "75d47494-9df5-495b-9d81-7d9c67146e8d",
+      "type": "credit",
+      "bankCode": "VCB",
+      "accountNumber": "0987654321",
+      "amount": 100000,
+      "status": "success",
+      "referenceId": "9fcd4de2-497c-4109-95b2-f22ac0d6e9d2",
+      "callbackUrl": "http://localhost:3000/api/v1/gateway/webhook",
+      "createdAt": "2026-06-04T06:28:51.485Z",
+      "completedAt": "2026-06-04T06:28:51.509Z",
+      "callbackSentAt": "2026-06-04T06:28:53.776Z",
+      "callbackStatus": "sent"
+    },
+    {
+      "id": "69d86bc2-5dbc-4e30-a5d9-08c0e09b54fc",
+      "type": "credit",
+      "bankCode": "VCB",
+      "accountNumber": "0987654321",
+      "amount": 100000,
+      "status": "success",
+      "referenceId": "b3328bdd-494f-4291-abea-734a0bc4ce63",
+      "callbackUrl": "http://localhost:3000/api/v1/gateway/webhook",
+      "createdAt": "2026-06-04T06:30:01.857Z",
+      "completedAt": "2026-06-04T06:30:01.887Z",
+      "callbackSentAt": "2026-06-04T06:30:04.138Z",
+      "callbackStatus": "sent"
     }
   ],
   "otpRecords": [
-    {
-      "bankCode": "VCB",
-      "accountNumber": "0123456789",
-      "code": "123456",
-      "expiresAt": "2026-06-04T01:50:39.807Z",
-      "used": true
-    },
     {
       "bankCode": "TCB",
       "accountNumber": "1234567890",
       "code": "123456",
       "expiresAt": "2026-06-04T02:19:47.506Z",
+      "used": true
+    },
+    {
+      "bankCode": "VCB",
+      "accountNumber": "0123456789",
+      "code": "123456",
+      "expiresAt": "2026-06-04T03:56:51.474Z",
+      "used": false
+    },
+    {
+      "bankCode": "VCB",
+      "accountNumber": "0987654321",
+      "code": "123456",
+      "expiresAt": "2026-06-04T03:57:10.227Z",
       "used": true
     }
   ]

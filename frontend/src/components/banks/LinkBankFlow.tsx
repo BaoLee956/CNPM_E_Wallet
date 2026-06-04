@@ -63,8 +63,8 @@ export function LinkBankFlow({ onSuccess, onCancel }: LinkBankFlowProps) {
       });
       setMaskedPhone(phone);
       setStep("confirm_otp");
-    } catch (e: any) {
-      showToast(e.message, "error");
+    } catch (e) {
+      // Lỗi đã được interceptor xử lý, không cần showToast ở đây
     } finally {
       setLoading(false);
     }
@@ -81,13 +81,12 @@ export function LinkBankFlow({ onSuccess, onCancel }: LinkBankFlowProps) {
         otp,
       });
       setStep("success");
-    } catch (e: any) {
-      showToast(e.message, "error");
+    } catch (e) {
+      // Lỗi đã được interceptor xử lý
     } finally {
       setLoading(false);
     }
   };
-
   const handleResendOtp = async () => {
     if (!selectedBank) return;
     setLoading(true);
@@ -99,8 +98,8 @@ export function LinkBankFlow({ onSuccess, onCancel }: LinkBankFlowProps) {
       });
       setMaskedPhone(phone);
       showToast("Đã gửi lại OTP", "success");
-    } catch (e: any) {
-      showToast(e.message, "error");
+    } catch (e) {
+      // Lỗi đã được interceptor xử lý
     } finally {
       setLoading(false);
     }
