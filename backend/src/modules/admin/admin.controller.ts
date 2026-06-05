@@ -5,7 +5,7 @@ import {
 import { AdminService } from './admin.service';
 import {
   QueryUsersDto, UpdateUserStatusDto,
-  QueryTransactionsDto, RefundDto, QueryStatisticsDto,
+  QueryTransactionsDto, RefundDto, QueryStatisticsDto, ChangePasswordDto,
 } from './dto/admin.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -60,5 +60,11 @@ export class AdminController {
   getStatistics(@Request() req: any, @Query() query: QueryStatisticsDto) {
     this.checkAdmin(req);
     return this.adminService.getStatistics(query);
+  }
+
+  @Put('change-password')
+  changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
+    this.checkAdmin(req);
+    return this.adminService.changePassword(req.user.id, dto);
   }
 }

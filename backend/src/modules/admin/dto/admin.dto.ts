@@ -1,5 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional, IsInt, Min, IsIn, IsDateString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, IsNotEmpty, IsOptional, IsInt, Min, MinLength, IsIn, IsDateString } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 
 // DTO cho query tìm kiếm danh sách Users
 export class QueryUsersDto {
@@ -87,4 +87,18 @@ export class RefundDto {
   @IsString()
   @IsNotEmpty({ message: 'Lý do hoàn tiền không được để trống' })
   reason!: string;
+}
+
+// DTO cho đổi mật khẩu admin
+export class ChangePasswordDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Mật khẩu hiện tại không được để trống' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  currentPassword!: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'Mật khẩu mới không được để trống' })
+  @MinLength(6, { message: 'Mật khẩu mới phải có ít nhất 6 ký tự' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  newPassword!: string;
 }

@@ -5,12 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import * as bcrypt from 'bcrypt';
 import {
   QueryUsersDto,
   UpdateUserStatusDto,
   QueryTransactionsDto,
   RefundDto,
   QueryStatisticsDto,
+  ChangePasswordDto,
 } from './dto/admin.dto';
 
 @Injectable()
@@ -28,16 +30,20 @@ export class AdminService {
     transactionId?: string;
     details?: Record<string, unknown>;
   }) {
-    await this.prisma.adminAuditLog.create({
-      data: {
-        adminId: data.adminId,
-        action: data.action,
-        reason: data.reason,
-        targetUserId: data.targetUserId,
-        transactionId: data.transactionId,
-        details: data.details,
-      },
-    });
+    try {
+      await this.prisma.adminAuditLog.create({
+        data: {
+          adminId: data.adminId,
+          action: data.action,
+          reason: data.reason,
+          targetUserId: data.targetUserId,
+          transactionId: data.transactionId,
+          details: data.details,
+        },
+      });
+    } catch {
+      // Audit log failure should not break the main operation
+    }
   }
 
   private getDateRange(query: QueryStatisticsDto) {
@@ -661,4 +667,40 @@ export class AdminService {
       },
     };
   }
+
+  // 8. ĐỔI MẬT KHẨU ADMIN
+  async changePassword(adminId: string, dto: ChangePasswordDto) {
+    console.log('[changePassword] adminId:', adminId);
+    const admin = await this.prisma.admin.findFirst({
+      where: { userId: adminId },
+      select: { id: true, userId: true, user: { select: { passwordHash: true } } },
+    });
+    console.log('[changePassword] admin found:', admin);
+
+    if (!admin) {
+      throw new NotFoundException('Không tìm thấy tài khoản admin');
+    }
+
+    const isMatch = await bcrypt.compare(dto.currentPassword, admin.user.passwordHash);
+    console.log('[changePassword] password match:', isMatch);
+    if (!isMatch) {
+      throw new BadRequestException('Mật khẩu hiện tại không chính xác');
+    }
+
+    const newPasswordHash = await bcrypt.hash(dto.newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: admin.userId },
+      data: { passwordHash: newPasswordHash },
+    });
+    console.log('[changePassword] done');
+
+    await this.createAuditLog({
+      adminId: admin.id,
+      action: 'change_password',
+      details: { changedAt: new Date().toISOString() },
+    });
+
+    return { message: 'Đổi mật khẩu thành công' };
+  }
 }
+
