@@ -323,6 +323,13 @@
       "code": "123456",
       "expiresAt": "2026-06-04T03:57:10.227Z",
       "used": true
+    },
+    {
+      "bankCode": "BIDV",
+      "accountNumber": "2345678901",
+      "code": "123456",
+      "expiresAt": "2026-06-05T19:27:37.290Z",
+      "used": true
     }
   ]
 }

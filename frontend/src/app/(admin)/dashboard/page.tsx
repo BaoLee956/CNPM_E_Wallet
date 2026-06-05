@@ -71,11 +71,11 @@ export default function DashboardPage() {
   const timeoutTx = fallbackTx ? recentTransactions.filter((t) => t.status === "Timeout").length : 0;
   const resolvedTx = fallbackTx ? recentTransactions.filter((t) => t.status === "Resolved").length : 0;
 
-  const revToday = stats?.revenueToday ?? 0;
+  const revToday = stats?.totalFee ?? 0;
   const revYesterday = stats?.revenueYesterday ?? 0;
   const revDoD = stats?.revenueDoD ?? (revYesterday > 0 ? ((revToday - revYesterday) / revYesterday) * 100 : 0);
 
-  const txToday = stats?.transactionsToday ?? 0;
+  const txToday = stats?.dailySeries?.[0]?.transactionCount ?? stats?.totalTransactionCount ?? 0;
   const txYesterday = stats?.transactionsYesterday ?? 0;
   const txDoD = stats?.txDoD ?? (txYesterday > 0 ? ((txToday - txYesterday) / txYesterday) * 100 : 0);
 
