@@ -1,11 +1,13 @@
 import { PrismaService } from '../../prisma.service';
 
+type AccountNumberClient = Pick<PrismaService, 'wallet'>;
+
 /**
  * Sinh số tài khoản duy nhất cho ví.
  * Format: 890 + 9 chữ số ngẫu nhiên (tổng 12 số)
  * Nếu trùng, thử lại tối đa 5 lần, sau đó fallback dùng timestamp.
  */
-export async function generateUniqueAccountNumber(prisma: PrismaService): Promise<string> {
+export async function generateUniqueAccountNumber(prisma: AccountNumberClient): Promise<string> {
   const prefix = '890';
   const maxAttempts = 5;
   let attempts = 0;

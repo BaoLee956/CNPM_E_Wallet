@@ -39,6 +39,14 @@ export class WalletsController {
     return { message: 'Lấy danh sách giao dịch thành công', data: result.data, total: result.total };
   }
 
+  @Get('lookup')
+  lookupRecipient(
+    @Request() req: any,
+    @Query('accountNumber') accountNumber: string,
+  ) {
+    return this.walletsService.lookupRecipient(req.user.id, accountNumber);
+  }
+
   @Get('me/transactions/:id')
   getTransaction(@Request() req: any, @Param('id') id: string) {
     return this.walletsService.getTransaction(req.user.id, id);

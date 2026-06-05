@@ -46,6 +46,8 @@ export function BankList({ banks, loading, onRefresh }: BankListProps) {
       await bankService.setDefault(bank.id);
       showToast("Đã đặt làm mặc định", "success");
       onRefresh();
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Có lỗi xảy ra", "error");
     } finally {
       setSettingDefault(null);
     }

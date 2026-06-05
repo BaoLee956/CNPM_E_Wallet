@@ -12,7 +12,13 @@ import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/useToast";
-import { ArrowUpRight, ArrowDownLeft, Landmark, Bell, Settings } from "lucide-react";
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  Landmark,
+  Bell,
+  Settings,
+} from "lucide-react";
 
 // Simple Avatar using initial letters
 function Avatar({ name }: { name: string }) {
@@ -105,48 +111,6 @@ export default function ProfilePage() {
               }).format(wallet?.balance || 0)}
             </p>
           </div>
-        </div>
-      </Card>
-
-      {/* Quick Actions */}
-      <Card>
-        <div className="grid grid-cols-2 gap-3">
-          <Link
-            href="/topup"
-            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-surface-sunken hover:bg-surface-hover transition-colors"
-          >
-            <div className="h-10 w-10 rounded-full bg-success/10 flex items-center justify-center text-success">
-              <ArrowDownLeft size={20} />
-            </div>
-            <span className="text-sm font-medium text-primary">Nạp tiền</span>
-          </Link>
-          <Link
-            href="/withdraw"
-            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-surface-sunken hover:bg-surface-hover transition-colors"
-          >
-            <div className="h-10 w-10 rounded-full bg-danger/10 flex items-center justify-center text-danger">
-              <ArrowUpRight size={20} />
-            </div>
-            <span className="text-sm font-medium text-primary">Rút tiền</span>
-          </Link>
-          <Link
-            href="/banks"
-            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-surface-sunken hover:bg-surface-hover transition-colors"
-          >
-            <div className="h-10 w-10 rounded-full bg-info/10 flex items-center justify-center text-info">
-              <Landmark size={20} />
-            </div>
-            <span className="text-sm font-medium text-primary">Ngân hàng</span>
-          </Link>
-          <Link
-            href="/notifications"
-            className="flex flex-col items-center gap-2 p-4 rounded-xl bg-surface-sunken hover:bg-surface-hover transition-colors"
-          >
-            <div className="h-10 w-10 rounded-full bg-warning/10 flex items-center justify-center text-warning">
-              <Bell size={20} />
-            </div>
-            <span className="text-sm font-medium text-primary">Thông báo</span>
-          </Link>
         </div>
       </Card>
 

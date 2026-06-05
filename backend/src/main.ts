@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,6 +11,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true, // Loại bỏ các thuộc tính không có trong DTO
   })); // Sử dụng ValidationPipe toàn cục
+
+  app.useGlobalFilters(new HttpExceptionFilter()); // Sử dụng ExceptionFilter toàn cục
 
   const port = process.env.PORT || 3000;
   await app.listen(port);

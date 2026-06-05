@@ -9,18 +9,25 @@ import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { bankService, type LinkedBank } from "@/services/bankService";
 import { Button } from "@/components/ui";
 import { Plus } from "lucide-react";
+import { useToast } from "@/hooks/useToast";
 
 export default function BanksPage() {
   const { isLoading: authLoading } = useRequireAuth();
   const [linkedBanks, setLinkedBanks] = useState<LinkedBank[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLinkFlow, setShowLinkFlow] = useState(false);
+  const { showToast } = useToast();
 
   const loadBanks = async () => {
     setLoading(true);
-    const banks = await bankService.getLinkedBanks();
-    setLinkedBanks(banks);
-    setLoading(false);
+    try {
+      const banks = await bankService.getLinkedBanks();
+      setLinkedBanks(banks);
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Không thể tải danh sách ngân hàng", "error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

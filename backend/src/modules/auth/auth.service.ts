@@ -78,18 +78,18 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const { phoneNumber, password } = dto;
-    
+
     const user = await this.prisma.user.findUnique({
       where: { phoneNumber }
     });
 
     if (!user) {
-      throw new UnauthorizedException('Sai số điện thoại hoặc mật khẩu');
+      throw new UnauthorizedException('Số điện thoại hoặc mật khẩu không chính xác');
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      throw new UnauthorizedException('Sai số điện thoại hoặc mật khẩu');
+      throw new UnauthorizedException('Số điện thoại hoặc mật khẩu không chính xác');
     }
 
     const payload = { id: user.id, phoneNumber: user.phoneNumber, role: user.role };

@@ -16,7 +16,7 @@ import {
   UpdateWalletLimitsDto,
 } from './dto/wallets.dto';
 
-const WALLET_CALLBACK_BASE = process.env.APP_URL || 'http://localhost:3000';
+const WALLET_CALLBACK_BASE = process.env.APP_URL || 'http://localhost:3002';
 
 @Injectable()
 export class WalletsService {
@@ -76,6 +76,57 @@ export class WalletsService {
     });
     if (!tx) throw new NotFoundException('Không tìm thấy giao dịch');
     return { message: 'OK', data: tx };
+  }
+
+    async lookupRecipient(requesterId: string, accountNumber: string) {
+    if (!accountNumber || accountNumber.trim().length < 6) {
+      throw new BadRequestException('Số tài khoản không hợp lệ');
+    }
+ 
+    const wallet = await this.prisma.wallet.findUnique({
+      where: { accountNumber: accountNumber.trim() },
+      select: {
+        accountNumber: true,
+        isActive: true,
+        userId: true,
+        user: { select: { name: true } },
+      },
+    });
+ 
+    if (!wallet) {
+      throw new NotFoundException('Không tìm thấy tài khoản');
+    }
+    if (!wallet.isActive) {
+      throw new BadRequestException('Tài khoản này đã bị khóa');
+    }
+    if (wallet.userId === requesterId) {
+      throw new BadRequestException('Không thể tra cứu tài khoản của chính mình');
+    }
+ 
+    return {
+      message: 'Tra cứu thành công',
+      data: {
+        accountNumber: wallet.accountNumber,
+        // Mask tên để bảo vệ privacy: "Nguyễn Văn A" → "Nguyễn V*** A"
+        name: this.maskName(wallet.user.name),
+      },
+    };
+  }
+ 
+  // Mask tên: giữ họ đầy đủ + chữ đầu tên đệm + tên cuối
+  // "Nguyễn Văn An" → "Nguyễn V*** An"
+  private maskName(fullName: string): string {
+    const parts = fullName.trim().split(' ');
+    if (parts.length === 1) return parts[0]; // Chỉ 1 từ thì giữ nguyên
+    if (parts.length === 2) return `${parts[0]} ${parts[1][0]}***`;
+ 
+    const first = parts[0];
+    const last = parts[parts.length - 1];
+    const middle = parts
+      .slice(1, -1)
+      .map((p) => `${p[0]}***`)
+      .join(' ');
+    return `${first} ${middle} ${last}`;
   }
  
   // ─── POST /api/v1/wallets/top-up ────────────────────────────────────
