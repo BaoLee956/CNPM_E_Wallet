@@ -23,7 +23,7 @@
       "bankCode": "TCB",
       "accountNumber": "1234567890",
       "accountName": "LE VAN C",
-      "balance": 28880000,
+      "balance": 28780000,
       "phone": "0923456780",
       "maskedPhone": "****6780"
     },
@@ -32,7 +32,7 @@
       "bankCode": "BIDV",
       "accountNumber": "2345678901",
       "accountName": "PHAM THI D",
-      "balance": 13000000,
+      "balance": 13500000,
       "phone": "0934567891",
       "maskedPhone": "****7891"
     },
@@ -314,6 +314,62 @@
       "completedAt": "2026-06-05T09:34:30.711Z",
       "callbackSentAt": "2026-06-05T09:34:33.173Z",
       "callbackStatus": "sent"
+    },
+    {
+      "id": "94f360d0-6f65-4ebd-8908-b0b704918a50",
+      "type": "debit",
+      "bankCode": "BIDV",
+      "accountNumber": "2345678901",
+      "amount": 200000,
+      "status": "success",
+      "referenceId": "0badb3e2-ad0e-4c5d-9f6b-6105d38da5ab",
+      "callbackUrl": "http://localhost:3002/api/v1/gateway/webhook",
+      "createdAt": "2026-06-05T12:50:28.089Z",
+      "completedAt": "2026-06-05T12:50:28.295Z",
+      "callbackSentAt": "2026-06-05T12:50:30.895Z",
+      "callbackStatus": "sent"
+    },
+    {
+      "id": "af3a0c76-33c1-4dfc-bfd5-783afe928398",
+      "type": "credit",
+      "bankCode": "BIDV",
+      "accountNumber": "2345678901",
+      "amount": 500000,
+      "status": "success",
+      "referenceId": "6cba04cc-6cce-4502-ae7a-22ebd97c775f",
+      "callbackUrl": "http://localhost:3002/api/v1/gateway/webhook",
+      "createdAt": "2026-06-05T12:51:17.354Z",
+      "completedAt": "2026-06-05T12:51:17.425Z",
+      "callbackSentAt": "2026-06-05T12:51:19.536Z",
+      "callbackStatus": "sent"
+    },
+    {
+      "id": "430c35e1-d093-4bec-8726-c94abafcb328",
+      "type": "credit",
+      "bankCode": "BIDV",
+      "accountNumber": "2345678901",
+      "amount": 200000,
+      "status": "success",
+      "referenceId": "d5ae370e-fc13-452e-880b-0815e13b0b70",
+      "callbackUrl": "http://localhost:3002/api/v1/gateway/webhook",
+      "createdAt": "2026-06-05T12:53:00.716Z",
+      "completedAt": "2026-06-05T12:53:00.767Z",
+      "callbackSentAt": "2026-06-05T12:53:02.870Z",
+      "callbackStatus": "sent"
+    },
+    {
+      "id": "841f823a-13ed-4888-ab80-a8d01ac1efc7",
+      "type": "debit",
+      "bankCode": "TCB",
+      "accountNumber": "1234567890",
+      "amount": 100000,
+      "status": "success",
+      "referenceId": "9d8d46c4-abb8-4733-880c-0b3629e0f560",
+      "callbackUrl": "http://localhost:3002/api/v1/gateway/webhook",
+      "createdAt": "2026-06-05T13:04:10.521Z",
+      "completedAt": "2026-06-05T13:04:10.566Z",
+      "callbackSentAt": "2026-06-05T13:04:13.138Z",
+      "callbackStatus": "sent"
     }
   ],
   "otpRecords": [
@@ -342,7 +398,7 @@
       "bankCode": "BIDV",
       "accountNumber": "2345678901",
       "code": "123456",
-      "expiresAt": "2026-06-05T09:38:20.981Z",
+      "expiresAt": "2026-06-05T12:44:34.453Z",
       "used": true
     }
   ]
