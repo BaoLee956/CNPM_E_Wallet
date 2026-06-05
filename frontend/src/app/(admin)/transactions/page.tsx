@@ -1,10 +1,25 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Search, AlertTriangle, CheckCircle2, Clock, RefreshCw, Ban, Eye, X } from "lucide-react";
 import { useAdminStore, type AdminTransaction, type TxStatus } from "@/stores/adminStore";
+import { useAdminTransactions } from "@/hooks/useAdminTransactions";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 
+// ── Skeleton rows ──────────────────────────────────────────────
+function SkeletonRow() {
+  return (
+    <tr className="animate-pulse">
+      {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+        <td key={i} className="px-5 py-4">
+          <div className="h-4 rounded bg-slate-800 w-full max-w-[100px]" />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+// ── Status config ────────────────────────────────────────────────
 const STATUS_CONFIG: Record<TxStatus, { label: string; bg: string; text: string; border: string; icon: React.ReactNode }> = {
   Pending: {
     label: "Pending",
@@ -57,6 +72,7 @@ function StatusBadge({ status }: { status: TxStatus }) {
   );
 }
 
+// ── Audit Modal ────────────────────────────────────────────────
 function AuditModal({
   tx,
   onClose,
@@ -66,28 +82,6 @@ function AuditModal({
   onClose: () => void;
   onRequestAction: (txId: string, action: "resolve" | "refund") => void;
 }) {
-  const mockPayload = {
-    transaction: {
-      txId: tx.txId,
-      userId: tx.userId,
-      userName: tx.userName,
-      amount: tx.amount,
-      currency: "VND",
-      channel: tx.paymentChannel,
-      status: tx.status,
-      timestamp: tx.timestamp,
-    },
-    internalLogs: [
-      { time: tx.timestamp, level: "INFO", message: `Transaction ${tx.txId} initiated` },
-      { time: tx.timestamp, level: "DEBUG", message: `Validating user ${tx.userId} balance` },
-      { time: tx.timestamp, level: tx.status === "Timeout" || tx.status === "Pending" ? "WARN" : "INFO", message: tx.status === "Timeout" ? `Gateway timeout — no response from ${tx.paymentChannel}` : `Request forwarded to ${tx.paymentChannel} API` },
-      { time: tx.timestamp, level: tx.status === "Timeout" || tx.status === "Pending" ? "ERROR" : "INFO", message: tx.status === "Timeout" ? "Connection reset by peer after 30s" : `${tx.paymentChannel} responded successfully` },
-    ],
-    externalResponse: tx.status === "Timeout"
-      ? { success: false, error: "504 Gateway Timeout", provider: tx.paymentChannel, rawBody: `{ "code": "TIMEOUT", "message": "Request timed out after 45s" }` }
-      : { success: true, code: "00", message: "Approved", refId: `REF-${Math.floor(Math.random() * 900000 + 100000)}` },
-  };
-
   const isActionable = tx.status === "Pending" || tx.status === "Timeout" || tx.status === "Processing";
 
   return (
@@ -142,38 +136,28 @@ function AuditModal({
             </div>
           )}
 
-          {/* Technical payload */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Technical Payload</h3>
-
-            {/* Internal logs */}
-            <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-slate-800 bg-slate-900/60">
-                <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider">Internal Logs</span>
-              </div>
-              <div className="p-4 space-y-1.5 font-mono text-xs max-h-48 overflow-y-auto">
-                {mockPayload.internalLogs.map((log, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <span className="text-slate-600 shrink-0">{log.time.split(" ")[1]}</span>
-                    <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                      log.level === "ERROR" ? "bg-rose-500/20 text-rose-400" :
-                      log.level === "WARN" ? "bg-amber-500/20 text-amber-400" :
-                      "bg-slate-800 text-slate-400"
-                    }`}>{log.level}</span>
-                    <span className="text-slate-300">{log.message}</span>
-                  </div>
-                ))}
-              </div>
+          {/* Transaction type info */}
+          <div className="bg-slate-800/70 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider">Transaction Details</span>
             </div>
-
-            {/* External API response */}
-            <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-slate-800 bg-slate-900/60">
-                <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">External API Response</span>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Type</p>
+                <p className="text-sm text-slate-200 mt-0.5 capitalize">{tx.type}</p>
               </div>
-              <pre className="p-4 text-xs font-mono text-cyan-300/80 overflow-x-auto leading-relaxed">
-                {JSON.stringify(mockPayload.externalResponse, null, 2)}
-              </pre>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">User ID</p>
+                <p className="text-sm text-slate-200 mt-0.5 font-mono">{tx.userId}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Original ID</p>
+                <p className="text-sm text-slate-200 mt-0.5 font-mono">{tx.originalId}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Currency</p>
+                <p className="text-sm text-slate-200 mt-0.5">{tx.currency}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -183,18 +167,18 @@ function AuditModal({
           <div className="p-6 border-t border-slate-700 bg-slate-900/80 shrink-0">
             <div className="flex gap-3">
               <button
-                onClick={() => { onRequestAction(tx.txId, "resolve"); }}
+                onClick={() => { onRequestAction(tx.originalId, "resolve"); }}
                 className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-emerald-600/20"
               >
                 <CheckCircle2 size={16} />
-                Force Success / Re-sync
+                Mark as Resolved
               </button>
               <button
-                onClick={() => { onRequestAction(tx.txId, "refund"); }}
+                onClick={() => { onRequestAction(tx.originalId, "refund"); }}
                 className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm transition-colors shadow-lg shadow-rose-600/20"
               >
                 <Ban size={16} />
-                Refund / Cancel
+                Refund
               </button>
             </div>
           </div>
@@ -214,26 +198,39 @@ function AuditModal({
   );
 }
 
+// ── Main Page ──────────────────────────────────────────────────
 export default function TransactionsPage() {
-  const { transactions, resolveTransaction } = useAdminStore();
+  const { transactions, transactionsTotal, transactionsPage, transactionsTotalPages, isLoadingTransactions, errorTransactions } = useAdminTransactions();
+  const { fetchTransactions, refundTransaction, resolveTransaction } = useAdminTransactions();
+  const { showToast } = useAdminStore();
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TxStatus | "All">("All");
   const [selectedTx, setSelectedTx] = useState<AdminTransaction | null>(null);
   const [pendingAction, setPendingAction] = useState<{ txId: string; action: "resolve" | "refund"; txName: string } | null>(null);
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
+
+  // Initial fetch
+  useEffect(() => {
+    fetchTransactions({ page: 1, limit: 20 });
+  }, [fetchTransactions]);
+
+  const handleStatusFilter = useCallback((s: TxStatus | "All") => {
+    setStatusFilter(s);
+    setPage(1);
+    const beStatus = s === "All" ? undefined : mapFilterStatus(s);
+    fetchTransactions({ status: beStatus, page: 1, limit: 20 });
+  }, [fetchTransactions]);
+
+  const handlePageChange = useCallback((p: number) => {
+    setPage(p);
+    fetchTransactions({ page: p, limit: 20 });
+  }, [fetchTransactions]);
 
   const filtered = useMemo(() => {
-    return transactions.filter((tx) => {
-      const matchSearch =
-        !search ||
-        tx.txId.toLowerCase().includes(search.toLowerCase()) ||
-        tx.userId.toLowerCase().includes(search.toLowerCase()) ||
-        tx.userName.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = statusFilter === "All" || tx.status === statusFilter;
-      return matchSearch && matchStatus;
-    });
-  }, [transactions, search, statusFilter]);
+    if (statusFilter === "All") return transactions;
+    return transactions.filter((tx) => tx.status === statusFilter);
+  }, [transactions, statusFilter]);
 
   const counts = useMemo(() => ({
     pending: transactions.filter((t) => t.status === "Pending").length,
@@ -242,7 +239,17 @@ export default function TransactionsPage() {
     resolved: transactions.filter((t) => t.status === "Resolved").length,
   }), [transactions]);
 
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const handleConfirmAction = async () => {
+    if (!pendingAction) return;
+    if (pendingAction.action === "resolve") {
+      await resolveTransaction(pendingAction.txId);
+    } else {
+      await refundTransaction(pendingAction.txId, "Refunded by admin");
+    }
+    setPendingAction(null);
+    setSelectedTx(null);
+    fetchTransactions({ page, limit: 20 });
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -254,13 +261,27 @@ export default function TransactionsPage() {
         </p>
       </div>
 
+      {/* Error banner */}
+      {errorTransactions && (
+        <div className="flex items-center gap-3 bg-rose-500/10 border border-rose-500/30 rounded-2xl px-5 py-4">
+          <AlertTriangle size={16} className="text-rose-400 shrink-0" />
+          <p className="text-sm text-rose-400">{errorTransactions}</p>
+          <button
+            onClick={() => fetchTransactions({ page: 1, limit: 20 })}
+            className="ml-auto text-xs text-rose-400 underline hover:no-underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Metric cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
           { label: "Pending", value: counts.pending, icon: <Clock size={20} />, color: "amber", border: "border-amber-500/30", bg: "bg-amber-500/10", text: "text-amber-400", pulse: true },
           { label: "Timeout", value: counts.timeout, icon: <AlertTriangle size={20} />, color: "rose", border: "border-rose-500/30", bg: "bg-rose-500/10", text: "text-rose-400", pulse: false },
           { label: "Processing", value: counts.processing, icon: <RefreshCw size={20} />, color: "blue", border: "border-blue-500/30", bg: "bg-blue-500/10", text: "text-blue-400", pulse: false },
-          { label: "Avg Resolution", value: "4.2 min", icon: <CheckCircle2 size={20} />, color: "emerald", border: "border-emerald-500/30", bg: "bg-emerald-500/10", text: "text-emerald-400", pulse: false },
+          { label: "Total (API)", value: transactionsTotal, icon: <CheckCircle2 size={20} />, color: "emerald", border: "border-emerald-500/30", bg: "bg-emerald-500/10", text: "text-emerald-400", pulse: false },
         ].map((card) => (
           <div key={card.label} className={`relative overflow-hidden rounded-2xl border ${card.border} ${card.bg} p-5`}>
             <div className="absolute -top-4 -right-4 h-20 w-20 rounded-full opacity-10 bg-current" />
@@ -281,7 +302,7 @@ export default function TransactionsPage() {
             type="text"
             placeholder="Search by TxID, User ID, name..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 h-10 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all"
           />
         </div>
@@ -289,7 +310,7 @@ export default function TransactionsPage() {
           {(["All", "Pending", "Timeout", "Processing", "Resolved", "Refunded"] as const).map((s) => (
             <button
               key={s}
-              onClick={() => { setStatusFilter(s); setPage(1); }}
+              onClick={() => handleStatusFilter(s)}
               className={[
                 "h-9 px-3 rounded-xl text-xs font-semibold border transition-all duration-150 whitespace-nowrap",
                 statusFilter === s
@@ -317,17 +338,19 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
-              {paginated.length === 0 ? (
+              {isLoadingTransactions ? (
+                Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-16 text-center text-slate-500 text-sm">
-                    No transactions match your filters.
+                    {errorTransactions ? "Failed to load transactions." : "No transactions match your filters."}
                   </td>
                 </tr>
               ) : (
-                paginated.map((tx) => {
+                filtered.map((tx) => {
                   const actionable = tx.status === "Pending" || tx.status === "Timeout" || tx.status === "Processing";
                   return (
-                    <tr key={tx.txId} className={[
+                    <tr key={tx.originalId} className={[
                       "transition-colors group",
                       tx.status === "Pending" ? "bg-amber-500/5 hover:bg-amber-500/10" :
                       tx.status === "Timeout" ? "bg-rose-500/5 hover:bg-rose-500/10" :
@@ -335,7 +358,7 @@ export default function TransactionsPage() {
                       "hover:bg-slate-800/50",
                     ].join(" ")}>
                       <td className="px-5 py-4">
-                        <span className="text-xs font-mono font-semibold text-slate-200">{tx.txId}</span>
+                        <span className="text-xs font-mono font-semibold text-slate-200">{tx.txId.slice(0, 16)}...</span>
                       </td>
                       <td className="px-5 py-4">
                         <span className="text-xs text-slate-400 whitespace-nowrap">{tx.timestamp}</span>
@@ -376,36 +399,39 @@ export default function TransactionsPage() {
         </div>
 
         {/* Pagination */}
-        {filtered.length > PAGE_SIZE && (
+        {transactionsTotalPages > 1 && (
           <div className="flex items-center justify-between px-5 py-3.5 border-t border-slate-800">
             <p className="text-xs text-slate-500">
-              Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
+              Showing {(transactionsPage - 1) * 20 + 1}–{Math.min(transactionsPage * 20, transactionsTotal)} of {transactionsTotal}
             </p>
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
+                onClick={() => handlePageChange(transactionsPage - 1)}
+                disabled={transactionsPage === 1}
                 className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 disabled:opacity-40 transition-colors"
               >
                 ‹
               </button>
-              {Array.from({ length: Math.ceil(filtered.length / PAGE_SIZE) }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={[
-                    "h-8 w-8 flex items-center justify-center rounded-lg text-xs font-semibold border transition-colors",
-                    p === page
-                      ? "bg-indigo-600 border-indigo-500/50 text-white"
-                      : "bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700",
-                  ].join(" ")}
-                >
-                  {p}
-                </button>
-              ))}
+              {Array.from({ length: Math.min(5, transactionsTotalPages) }, (_, i) => {
+                const p = Math.max(1, Math.min(transactionsPage - 2, transactionsTotalPages - 4)) + i;
+                return (
+                  <button
+                    key={p}
+                    onClick={() => handlePageChange(p)}
+                    className={[
+                      "h-8 w-8 flex items-center justify-center rounded-lg text-xs font-semibold border transition-colors",
+                      p === transactionsPage
+                        ? "bg-indigo-600 border-indigo-500/50 text-white"
+                        : "bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700",
+                    ].join(" ")}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
               <button
-                onClick={() => setPage((p) => Math.min(Math.ceil(filtered.length / PAGE_SIZE), p + 1))}
-                disabled={page === Math.ceil(filtered.length / PAGE_SIZE)}
+                onClick={() => handlePageChange(transactionsPage + 1)}
+                disabled={transactionsPage >= transactionsTotalPages}
                 className="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:bg-slate-700 disabled:opacity-40 transition-colors"
               >
                 ›
@@ -421,35 +447,38 @@ export default function TransactionsPage() {
           tx={selectedTx}
           onClose={() => setSelectedTx(null)}
           onRequestAction={(txId, action) => {
-            const tx = transactions.find((t) => t.txId === txId);
-            setPendingAction({ txId, action, txName: tx?.userName ?? txId });
+            setPendingAction({ txId, action, txName: selectedTx.userName });
           }}
         />
       )}
 
-      {/* Force Success / Refund Confirmation */}
+      {/* Confirm Dialog */}
       {pendingAction && (
         <ConfirmDialog
           open
-          title={pendingAction.action === "resolve" ? "Force Success" : "Refund Transaction"}
+          title={pendingAction.action === "resolve" ? "Mark as Resolved" : "Refund Transaction"}
           message={
             pendingAction.action === "resolve"
-              ? `This will mark transaction "${pendingAction.txId}" as successfully completed. Use this only if you have confirmed with the payment gateway that the transaction succeeded but was not synced.`
-              : `This will refund and cancel transaction "${pendingAction.txId}". The amount will be returned to the user's wallet. This action cannot be undone.`
+              ? `This will mark transaction "${pendingAction.txId.slice(0, 16)}..." as successfully completed. Only use this if you have confirmed with the payment gateway.`
+              : `This will refund and cancel the transaction. The amount will be returned to the user's wallet. This action cannot be undone.`
           }
-          confirmLabel={pendingAction.action === "resolve" ? "Force Success" : "Refund"}
+          confirmLabel={pendingAction.action === "resolve" ? "Mark Resolved" : "Refund"}
           variant={pendingAction.action === "resolve" ? "warning" : "danger"}
-          onConfirm={() => {
-            resolveTransaction(
-              pendingAction.txId,
-              pendingAction.action === "resolve" ? "Resolved" : "Refunded"
-            );
-            setPendingAction(null);
-            setSelectedTx(null);
-          }}
+          onConfirm={handleConfirmAction}
           onCancel={() => setPendingAction(null)}
         />
       )}
     </div>
   );
+}
+
+// Helper: map frontend filter status to BE status
+function mapFilterStatus(s: TxStatus): string {
+  switch (s) {
+    case "Pending": return "pending";
+    case "Resolved": return "success";
+    case "Timeout": return "failed";
+    case "Refunded": return "cancelled";
+    default: return "pending";
+  }
 }
