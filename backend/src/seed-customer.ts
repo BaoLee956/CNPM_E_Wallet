@@ -1,13 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
-import { PrismaPg } from "@prisma/adapter-pg";
 import "dotenv/config";
 
-const adapter = new PrismaPg({
-    connectionString: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/e_wallet?schema=public',
-});
-
-const prisma = new PrismaClient({ adapter });
+// Chỉ cần khởi tạo PrismaClient mặc định, nó sẽ tự đọc DATABASE_URL trong file .env
+const prisma = new PrismaClient();
 
 async function main() {
   const customerPhone = '0901234567';
@@ -36,11 +32,11 @@ async function main() {
       email: customerEmail,
       passwordHash,
       role: 'customer',
-      wallets: { // Đã sửa thành wallets (số nhiều) theo đúng schema
+      wallets: { 
         create: {
           balance: 500000,
           currency: 'VND',
-          accountNumber: customerPhone, // Bổ sung số tài khoản ví bắt buộc
+          accountNumber: customerPhone, 
         }
       }
     },
