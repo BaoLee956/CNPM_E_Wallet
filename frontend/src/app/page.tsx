@@ -1,7 +1,7 @@
 // app/page.tsx
 import Link from "next/link";
 import { ArrowRight, Shield, Zap, Users, Sparkles } from "lucide-react";
-import { LandingHeader } from "@/components/LandingHeader";
+import  LandingHeader  from "@/components/LandingHeader";
 
 export default function LandingPage() {
   return (
