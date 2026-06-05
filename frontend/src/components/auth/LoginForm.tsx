@@ -139,12 +139,6 @@ export function LoginForm({ initialHasSession = false }: LoginFormProps) {
             autoComplete="current-password"
           />
 
-          {error && (
-            <div className="text-danger text-sm bg-danger-light/20 p-2 rounded-lg text-center">
-              {error}
-            </div>
-          )}
-
           <Button
             type="submit"
             variant="primary"

@@ -3,37 +3,66 @@
 
 import { Button, Card } from "@/components/ui";
 import { CheckCircle } from "lucide-react";
-import type { TopUpResult } from "@/services/walletService";
+import type { TopUpState } from "@/hooks/useTopUp";
+import { formatVND } from "@/utils/format";
 
 interface TopUpSuccessProps {
-  result: TopUpResult;
+  state: TopUpState;
   onReset: () => void;
 }
 
-export function TopUpSuccess({ result, onReset }: TopUpSuccessProps) {
+export function TopUpSuccess({ state, onReset }: TopUpSuccessProps) {
   return (
     <Card className="text-center">
       <div className="flex flex-col items-center gap-3 py-4">
-        <CheckCircle size={48} className="text-success" />
-        <h2 className="text-xl font-bold text-primary">Top-up Successful!</h2>
-        <p className="text-secondary">
-          Your balance has been updated to{" "}
-          <span className="font-bold text-primary">
-            {new Intl.NumberFormat("vi-VN", {
-              style: "currency",
-              currency: "VND",
-            }).format(result.data.wallet.balance)}
-          </span>
-        </p>
-        <p className="text-xs text-tertiary">
-          Transaction ID: {result.data.transaction.id}
-        </p>
-        <div className="flex gap-3 mt-2">
-          <Button onClick={onReset} variant="outline">
-            Top Up Again
+        <div className="rounded-full bg-success/10 p-4">
+          <CheckCircle size={48} className="text-success" />
+        </div>
+
+        <div>
+          <h2 className="text-xl font-bold text-primary">
+            Nạp tiền thành công!
+          </h2>
+          <p className="text-sm text-secondary mt-1">
+            Giao dịch đã được xử lý thành công
+          </p>
+        </div>
+
+        <div className="w-full rounded-xl bg-surface-sunken p-4 text-left space-y-2 text-sm">
+          {state.amount && (
+            <div className="flex justify-between">
+              <span className="text-secondary">Số tiền nạp</span>
+              <span className="font-semibold text-primary">
+                {formatVND(state.amount)}
+              </span>
+            </div>
+          )}
+
+          {state.newBalance !== undefined && (
+            <div className="flex justify-between border-t border-subtle pt-2 mt-2">
+              <span className="text-secondary">Số dư mới</span>
+              <span className="font-bold text-brand-default">
+                {formatVND(state.newBalance)}
+              </span>
+            </div>
+          )}
+
+          {state.transactionId && (
+            <div className="flex justify-between">
+              <span className="text-secondary">Mã giao dịch</span>
+              <span className="font-mono text-xs text-tertiary truncate max-w-45">
+                {state.transactionId}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 w-full mt-2">
+          <Button variant="outline" onClick={onReset} fullWidth>
+            Nạp thêm
           </Button>
-          <Button onClick={() => (window.location.href = "/home")}>
-            Back to Home
+          <Button onClick={() => (window.location.href = "/home")} fullWidth>
+            Về trang chủ
           </Button>
         </div>
       </div>

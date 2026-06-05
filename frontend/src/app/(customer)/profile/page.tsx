@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { CustomerPage } from "@/components/ui/CustomerLayout";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -10,6 +11,14 @@ import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ChangePasswordForm } from "@/components/profile/ChangePasswordForm";
 import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/useToast";
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  Landmark,
+  Bell,
+  Settings,
+} from "lucide-react";
 
 // Simple Avatar using initial letters
 function Avatar({ name }: { name: string }) {
@@ -26,6 +35,7 @@ export default function ProfilePage() {
   const { user, updating, changingPassword, updateProfile, changePassword } =
     useProfile();
   const { wallet, isLoading: authLoading, logout } = useAuth();
+  const { showToast } = useToast();
   const [showChangePassword, setShowChangePassword] = useState(false);
 
   const handleLogout = async () => {
@@ -111,7 +121,15 @@ export default function ProfilePage() {
           initialEmail={user?.email || ""}
           initialPhone={user?.phoneNumber || ""}
           onSubmit={async (data) => {
-            await updateProfile(data);
+            try {
+              await updateProfile(data);
+              showToast("Cập nhật thông tin thành công", "success");
+            } catch (error) {
+              showToast(
+                error instanceof Error ? error.message : "Cập nhật thất bại",
+                "error",
+              );
+            }
           }}
           isLoading={updating}
         />

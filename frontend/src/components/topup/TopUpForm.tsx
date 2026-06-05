@@ -1,71 +1,297 @@
-// components/topup/TopUpForm.tsx
+/**
+ * frontend/src/components/topup/TopUpForm.tsx  (UPDATED — với confirm sheet)
+ *
+ * Flow mới:
+ *   1. User điền form → bấm "Nạp tiền"
+ *   2. Sheet mở với preview đầy đủ
+ *   3. User bấm "Xác nhận nạp tiền" → gọi onSubmit thật sự
+ */
+
 "use client";
-import { useState } from "react";
-import { Button, Input, Select, Card } from "@/components/ui";
+
+import { useState, useEffect } from "react";
+import { Button, Input, Card } from "@/components/ui";
+import {
+  TransactionConfirmSheet,
+  type TransactionPreview,
+} from "@/components/ui/TransactionConfirmSheet";
+import { BankLogo } from "@/components/banks/BankLogo";
+import {
+  bankService,
+  SUPPORTED_BANKS,
+  type LinkedBank,
+} from "@/services/bankService";
 import { type TopUpPayload } from "@/services/walletService";
+import { Building2, Zap, ChevronRight, CheckCircle2 } from "lucide-react";
 
 interface TopUpFormProps {
-  onSubmit: (data: TopUpPayload) => Promise<void>;
+  onSubmit: (data: TopUpPayload) => Promise<unknown>;
   isLoading: boolean;
+  isPending?: boolean;
   error: string | null;
 }
 
-const methodOptions = [
-  { value: "bank_transfer", label: "🏦 Bank Transfer" },
-  { value: "credit_card", label: "💳 Credit Card" },
-  { value: "debit_card", label: "💳 Debit Card" },
-  { value: "voucher", label: "🎫 Voucher" },
-];
-
-export function TopUpForm({ onSubmit, isLoading, error }: TopUpFormProps) {
+export function TopUpForm({
+  onSubmit,
+  isLoading,
+  isPending,
+  error,
+}: TopUpFormProps) {
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState<TopUpPayload["method"]>("bank_transfer");
   const [description, setDescription] = useState("");
+  const [linkedBanks, setLinkedBanks] = useState<LinkedBank[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
+  const [loadingBanks, setLoadingBanks] = useState(true);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Confirm sheet state
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [preview, setPreview] = useState<TransactionPreview | null>(null);
+  const [pendingPayload, setPendingPayload] = useState<TopUpPayload | null>(
+    null,
+  );
+
+  const QUICK_AMOUNTS = [
+    50_000, 100_000, 200_000, 500_000, 1_000_000, 2_000_000,
+  ];
+
+  useEffect(() => {
+    bankService
+      .getLinkedBanks()
+      .then(setLinkedBanks)
+      .finally(() => setLoadingBanks(false));
+  }, []);
+
+  const selectedBank = linkedBanks.find((b) => b.id === selectedBankId);
+  const bankInfo = selectedBank
+    ? SUPPORTED_BANKS.find((b) => b.code === selectedBank.bankCode)
+    : null;
+
+  // Bước 1: validate form → mở sheet preview (chưa gọi API)
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) return;
-    await onSubmit({
+    if (isNaN(numAmount) || numAmount < 10_000) return;
+
+    const payload: TopUpPayload = {
       amount: numAmount,
-      method,
       description: description.trim() || undefined,
-    });
+      ...(selectedBankId
+        ? { linkedBankId: selectedBankId }
+        : { method: "bank_transfer" }),
+    };
+
+    const previewData: TransactionPreview = {
+      type: "topup",
+      amount: numAmount,
+      description: description.trim() || undefined,
+      fee: 0,
+      ...(selectedBank && bankInfo
+        ? {
+            bankName: bankInfo.name,
+            bankColor: bankInfo.color,
+            accountNumber: `**** ${selectedBank.accountNumber.slice(-4)}`,
+            accountName: selectedBank.accountName,
+          }
+        : {}),
+    };
+
+    setPendingPayload(payload);
+    setPreview(previewData);
+    setSheetOpen(true);
   };
 
+  // Bước 2: user xác nhận → gọi API thật
+  const handleConfirm = async () => {
+    if (!pendingPayload) return;
+    await onSubmit(pendingPayload);
+    setSheetOpen(false);
+  };
+
+  const isProcessing = isLoading || isPending;
+
   return (
-    <Card>
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <Input
-          label="Amount (VND)"
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="e.g., 100000"
-          required
-          min="10000"
-          step="10000"
-          hint="Minimum 10,000 VND, maximum 50,000,000 VND"
-        />
-        <Select
-          label="Payment Method"
-          options={methodOptions}
-          value={method}
-          onChange={(e) => setMethod(e.target.value as any)}
-        />
-        <Input
-          label="Description (optional)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="e.g., Top up for shopping"
-        />
-        {error && (
-          <div className="text-danger text-sm text-center">{error}</div>
-        )}
-        <Button type="submit" loading={isLoading} fullWidth>
-          Continue to Pay
-        </Button>
-      </form>
-    </Card>
+    <>
+      <Card>
+        <form onSubmit={handleFormSubmit} className="space-y-5">
+          {/* ── Chọn nguồn tiền ── */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-primary">
+              Nguồn tiền
+            </label>
+
+            {loadingBanks ? (
+              <div className="h-16 animate-pulse rounded-xl bg-surface-sunken" />
+            ) : linkedBanks.length > 0 ? (
+              <div className="space-y-2">
+                {linkedBanks.map((bank) => {
+                  const info = SUPPORTED_BANKS.find(
+                    (b) => b.code === bank.bankCode,
+                  );
+                  const isSelected = selectedBankId === bank.id;
+                  return (
+                    <button
+                      key={bank.id}
+                      type="button"
+                      onClick={() =>
+                        setSelectedBankId(isSelected ? null : bank.id)
+                      }
+                      className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                        isSelected
+                          ? "border-brand-default bg-brand-subtle"
+                          : "border-subtle bg-white hover:border-brand-subtle"
+                      }`}
+                    >
+                      <BankLogo
+                        logoUrl={info?.logoUrl || ""}
+                        bankName={info?.name || bank.bankCode}
+                        size={40}
+                        backgroundColor={(info?.color || "#666") + "18"}
+                        rounded="lg"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-primary">
+                          {info?.name ?? bank.bankCode}
+                        </p>
+                        <p className="text-xs text-secondary font-mono">
+                          **** {bank.accountNumber.slice(-4)} ·{" "}
+                          {bank.accountName}
+                        </p>
+                      </div>
+                      {bank.isDefault && (
+                        <span className="text-xs font-medium text-brand-default bg-brand-subtle px-2 py-0.5 rounded-full">
+                          Mặc định
+                        </span>
+                      )}
+                      {isSelected && (
+                        <CheckCircle2
+                          size={18}
+                          className="text-brand-default shrink-0"
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+
+                {/* Tuỳ chọn nạp không qua ngân hàng */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedBankId(null)}
+                  className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                    selectedBankId === null
+                      ? "border-brand-default bg-brand-subtle"
+                      : "border-subtle bg-white hover:border-brand-subtle"
+                  }`}
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-sunken">
+                    <Zap size={18} className="text-secondary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-primary">
+                      Nạp nhanh (mock)
+                    </p>
+                    <p className="text-xs text-secondary">
+                      Không qua ngân hàng
+                    </p>
+                  </div>
+                  {selectedBankId === null && (
+                    <CheckCircle2
+                      size={18}
+                      className="text-brand-default shrink-0"
+                    />
+                  )}
+                </button>
+              </div>
+            ) : (
+              <a
+                href="/banks"
+                className="flex items-center gap-3 rounded-xl border border-dashed border-subtle bg-surface-sunken p-3 text-secondary hover:text-primary transition-colors"
+              >
+                <Building2 size={18} />
+                <span className="text-sm">
+                  Liên kết ngân hàng để nạp tiền nhanh hơn
+                </span>
+                <ChevronRight size={16} className="ml-auto" />
+              </a>
+            )}
+          </div>
+
+          {/* ── Số tiền ── */}
+          <div className="space-y-2">
+            <Input
+              label="Số tiền (VND)"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0"
+              required
+              min="10000"
+              step="10000"
+              hint="Tối thiểu 10,000 VND"
+            />
+            <div className="grid grid-cols-3 gap-2">
+              {QUICK_AMOUNTS.map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setAmount(String(preset))}
+                  className={`rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
+                    amount === String(preset)
+                      ? "border-brand-default bg-brand-subtle text-brand-default"
+                      : "border-subtle bg-white text-secondary hover:border-brand-subtle hover:text-primary"
+                  }`}
+                >
+                  {(preset / 1000).toLocaleString()}k
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Mô tả ── */}
+          <Input
+            label="Nội dung (tuỳ chọn)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Nạp tiền mua sắm..."
+          />
+
+          {/* ── Pending state ── */}
+          {isPending && (
+            <div className="flex items-center gap-3 rounded-xl bg-info-light/40 border border-info/20 p-3">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-info border-t-transparent shrink-0" />
+              <p className="text-sm text-info">
+                Đang chờ xác nhận từ ngân hàng...
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-danger text-sm text-center bg-danger-light/20 rounded-lg p-3">
+              {error}
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            loading={isLoading}
+            disabled={isProcessing || !amount || parseFloat(amount) < 10_000}
+            fullWidth
+          >
+            {isPending
+              ? "Đang xử lý..."
+              : selectedBankId
+                ? "Nạp từ ngân hàng"
+                : "Nạp tiền"}
+          </Button>
+        </form>
+      </Card>
+
+      {/* ── Confirm Sheet ── */}
+      <TransactionConfirmSheet
+        open={sheetOpen}
+        preview={preview}
+        onClose={() => setSheetOpen(false)}
+        onConfirm={handleConfirm}
+      />
+    </>
   );
 }

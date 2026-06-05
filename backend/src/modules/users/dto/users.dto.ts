@@ -12,10 +12,16 @@ export class ChangePasswordDto {
   newPassword!: string;
 }
 
+export class UpdateProfileDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Tên không được để trống' })
+  name!: string;
+}
+
 export class QueryCustomerTransactionsDto {
   @IsOptional()
   @IsString()
-  @IsIn(['deposit', 'withdraw', 'transfer', ''])
+  @IsIn(['deposit', 'withdraw', 'transfer', 'payment', 'refund', ''])
   type?: string;
 
   @IsOptional()

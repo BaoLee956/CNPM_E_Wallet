@@ -337,10 +337,13 @@ export default function HomePage() {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <button className="relative flex h-11 w-11 items-center justify-center rounded-full bg-surface-sunken text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-primary">
+            <Link
+              href="/notifications"
+              className="relative flex h-11 w-11 items-center justify-center rounded-full bg-surface-sunken text-secondary transition-colors duration-150 hover:bg-surface-hover hover:text-primary"
+            >
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-danger border-2 border-white shadow-sm" />
-            </button>
+            </Link>
             <button
               onClick={async () => {
                 await logout();
@@ -376,12 +379,6 @@ export default function HomePage() {
               action: goToTransfer,
             },
             {
-              label: "Receive",
-              icon: <ArrowDownLeft size={20} />,
-              bg: "bg-success-light text-success",
-              action: showComingSoon,
-            },
-            {
               label: "QR Pay",
               icon: <QrCode size={20} />,
               bg: "bg-info-light text-info",
@@ -413,46 +410,6 @@ export default function HomePage() {
 
         {/* ── Bank Account Entry ─────────────────────────────────── */}
         <BankEntryCard banks={linkedBanks} />
-
-        {/* Quick Transfer */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-primary">
-              Quick Transfer
-            </h3>
-            <button
-              onClick={goToTransfer}
-              className="text-xs font-medium text-brand-default hover:underline transition-colors"
-            >
-              See all
-            </button>
-          </div>
-          <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 snap-x scrollbar-hide">
-            <button
-              onClick={showComingSoon}
-              className="flex flex-col items-center gap-1.5 shrink-0 snap-start transition-transform hover:scale-105"
-            >
-              <span className="flex h-13 w-13 items-center justify-center rounded-full border-2 border-dashed border-default bg-surface-sunken text-tertiary transition-colors duration-150 hover:border-brand-default hover:text-brand-default">
-                <Plus size={20} />
-              </span>
-              <span className="text-2xs text-tertiary">Add</span>
-            </button>
-            {quickContacts.map((c) => (
-              <button
-                key={c.id}
-                onClick={goToTransfer}
-                className="flex flex-col items-center gap-1.5 shrink-0 snap-start transition-transform hover:scale-105"
-              >
-                <span
-                  className={`flex h-13 w-13 items-center justify-center rounded-full text-white text-sm font-bold shadow-md ${c.color}`}
-                >
-                  {c.initials}
-                </span>
-                <span className="text-2xs text-secondary">{c.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* ── Recent Transactions — real data ───────────────────── */}
         <div>

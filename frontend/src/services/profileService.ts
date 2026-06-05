@@ -1,10 +1,8 @@
-// services/profileService.ts
+import http from "@/lib/http";
 import { User } from "@/models/user";
 
 export interface UpdateProfileData {
-  name?: string;
-  email?: string;
-  phone?: string;
+  name: string;
 }
 
 export interface ChangePasswordData {
@@ -12,58 +10,21 @@ export interface ChangePasswordData {
   newPassword: string;
 }
 
-// Mock delay to simulate network request
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
 export const profileService = {
-  async getProfile(userId: string): Promise<User> {
-    await delay(800);
-    // In a real app, fetch from API
-    // For now, we'll rely on the auth store, but this simulates an API call
-    const stored = localStorage.getItem(`user_${userId}`);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    throw new Error("User not found");
+  async getProfile(): Promise<User> {
+    const res = await http.get("/api/v1/customer/profile");
+    return res.data.data;
   },
 
-  async updateProfile(userId: string, data: UpdateProfileData): Promise<User> {
-    await delay(600);
-    // Get current user from localStorage (mock)
-    const stored = localStorage.getItem("ewallet_user");
-    if (!stored) throw new Error("User not found");
-
-    const currentUser: User = JSON.parse(stored);
-    const updatedUser = { ...currentUser, ...data };
-    localStorage.setItem("ewallet_user", JSON.stringify(updatedUser));
-    const raw = localStorage.getItem("mock_users");
-    if (raw) {
-        const users = JSON.parse(raw);
-        for (const email in users) {
-            if (users[email].user.id === userId) {
-                users[email].user = updatedUser;
-                break;
-            }
-        }
-        localStorage.setItem("mock_users", JSON.stringify(users));
-    }
-    return updatedUser;
+  async updateProfile(data: UpdateProfileData): Promise<User> {
+    const res = await http.put("/api/v1/customer/profile", data);
+    return res.data.data;
   },
 
-  async changePassword(userId: string, data: ChangePasswordData): Promise<void> {
-    await delay(600);
-    // In mock, just validate that old password matches a stored hash
-    // For demo, we store a dummy password hash in localStorage
-    const storedHash = localStorage.getItem(`password_${userId}`);
-    // Simple mock: if no stored hash, assume "oldPassword" is "current123"
-    const isValid = storedHash
-      ? storedHash === btoa(data.oldPassword)
-      : data.oldPassword === "current123";
-
-    if (!isValid) {
-      throw new Error("Current password is incorrect");
-    }
-    // Save new password hash
-    localStorage.setItem(`password_${userId}`, btoa(data.newPassword));
+  async changePassword(data: ChangePasswordData): Promise<void> {
+    await http.put("/api/v1/customer/password", {
+      oldPassword: data.oldPassword,
+      newPassword: data.newPassword,
+    });
   },
 };

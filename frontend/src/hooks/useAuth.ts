@@ -1,8 +1,6 @@
 // hooks/useAuth.ts
 import { useAuthStore } from "@/stores/authStore";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { walletService } from "@/services/walletService";
 
 export function useAuth() {
   const router = useRouter();
@@ -36,7 +34,6 @@ export function useAuth() {
     logout,
     checkAuth,
     clearError,
-    refreshWallet,
     redirectToDashboard,
     redirectToLogin,
     updateWallet,

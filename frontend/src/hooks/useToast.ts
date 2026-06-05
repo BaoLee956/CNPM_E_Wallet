@@ -19,9 +19,15 @@ interface ToastState {
 export const useToast = create<ToastState>((set) => ({
   toasts: [],
   showToast: (message, type = "info", duration = 3000) => {
-    const id = Date.now().toString();
+    const normalizedMessage = message.trim();
+    if (!normalizedMessage) return;
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     set((state) => ({
-      toasts: [...state.toasts, { id, message, type, duration }],
+      toasts: state.toasts.some(
+        (toast) => toast.message === normalizedMessage && toast.type === type,
+      )
+        ? state.toasts
+        : [...state.toasts, { id, message: normalizedMessage, type, duration }],
     }));
     setTimeout(() => {
       set((state) => ({

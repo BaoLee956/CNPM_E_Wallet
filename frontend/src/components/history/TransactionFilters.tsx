@@ -44,6 +44,7 @@ export function TransactionFilters({
             <option value="receive">Receive</option>
             <option value="topup">Topup</option>
             <option value="payment">Payment</option>
+            <option value="withdraw">Withdraw</option>
           </select>
         </div>
 
