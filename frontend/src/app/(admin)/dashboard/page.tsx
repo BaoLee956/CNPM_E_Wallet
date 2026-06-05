@@ -51,7 +51,7 @@ function formatVNDShort(n: number) {
 }
 
 export default function DashboardPage() {
-  const { transactions, users, errorStats } = useAdminStore();
+  const { users, errorStats } = useAdminStore();
   const { statistics, isLoadingStats, fetchStatistics } = useAdminStats();
 
   useEffect(() => {
@@ -59,16 +59,17 @@ export default function DashboardPage() {
   }, [fetchStatistics]);
 
   const stats = statistics;
+  const recentTransactions = stats?.recentTransactions ?? [];
   const fallbackUsers = users.length > 0;
-  const fallbackTx = transactions.length > 0;
+  const fallbackTx = recentTransactions.length > 0;
 
   const totalUsers = stats?.totalUsers ?? (fallbackUsers ? users.length : 0);
   const activeUsers = stats?.activeUsers ?? (fallbackUsers ? users.filter((u) => u.status === "Active").length : 0);
   const lockedUsers = stats?.lockedUsers ?? (fallbackUsers ? users.filter((u) => u.status === "Locked").length : 0);
 
-  const pendingTx = stats?.pendingTransactions ?? (fallbackTx ? transactions.filter((t) => t.status === "Pending").length : 0);
-  const timeoutTx = fallbackTx ? transactions.filter((t) => t.status === "Timeout").length : 0;
-  const resolvedTx = fallbackTx ? transactions.filter((t) => t.status === "Resolved").length : 0;
+  const pendingTx = stats?.pendingTransactions ?? (fallbackTx ? recentTransactions.filter((t) => t.status === "Pending").length : 0);
+  const timeoutTx = fallbackTx ? recentTransactions.filter((t) => t.status === "Timeout").length : 0;
+  const resolvedTx = fallbackTx ? recentTransactions.filter((t) => t.status === "Resolved").length : 0;
 
   const revToday = stats?.revenueToday ?? 0;
   const revYesterday = stats?.revenueYesterday ?? 0;
@@ -90,7 +91,7 @@ export default function DashboardPage() {
   const txCounts = {
     pending: pendingTx,
     timeout: timeoutTx,
-    processing: fallbackTx ? transactions.filter((t) => t.status === "Processing").length : 0,
+    processing: fallbackTx ? recentTransactions.filter((t) => t.status === "Processing").length : 0,
     resolved: resolvedTx,
   };
 
@@ -193,7 +194,7 @@ export default function DashboardPage() {
             <div>
               <h3 className="text-sm font-bold text-white">Recent Transactions</h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Latest {transactions.length > 0 ? Math.min(5, transactions.length) : "—"} entries
+                Latest {recentTransactions.length > 0 ? Math.min(5, recentTransactions.length) : "—"} entries
               </p>
             </div>
             <a href="/transactions" className="text-xs text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
@@ -209,12 +210,12 @@ export default function DashboardPage() {
                 <SkeletonTableRow />
                 <SkeletonTableRow />
               </>
-            ) : transactions.length === 0 ? (
+            ) : recentTransactions.length === 0 ? (
               <div className="text-center py-12 text-slate-500 text-sm">
                 No transactions to display
               </div>
             ) : (
-              transactions.slice(0, 5).map((tx) => (
+              recentTransactions.slice(0, 5).map((tx) => (
                 <div key={tx.txId} className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 hover:bg-slate-800 transition-colors">
                   <div className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center ${
                     tx.status === "Pending" ? "bg-amber-500/20" :

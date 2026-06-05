@@ -64,6 +64,7 @@ export interface AdminStats {
   failedRate: number;
   successCount: number;
   failedCount: number;
+  recentTransactions: AdminTransaction[];
   dailySeries: Array<{
     date: string;
     revenue: number;

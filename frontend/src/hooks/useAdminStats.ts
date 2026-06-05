@@ -3,7 +3,7 @@
 // ============================================================
 
 import { useCallback } from 'react';
-import { useAdminStore } from '@/stores/adminStore';
+import { useAdminStore, mapTransaction } from '@/stores/adminStore';
 import { adminStatsService } from '@/services/admin/statsService';
 import type { PaginationParams } from '@/types/admin/notification';
 
@@ -39,6 +39,7 @@ export function useAdminStats() {
         failedRate: d.transactions.failedRate,
         successCount: d.transactions.successCount,
         failedCount: d.transactions.failedCount,
+        recentTransactions: (d.recentTransactions ?? []).map(mapTransaction),
         dailySeries: d.dailySeries,
         range: d.range,
       });
