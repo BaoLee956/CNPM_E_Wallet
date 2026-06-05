@@ -6,10 +6,6 @@ import { Eye, EyeOff, ShieldCheck, Lock, Mail, ChevronRight, Shield } from "luci
 import { adminAuthService } from "@/services/admin/authService";
 import { useAdminStore } from "@/stores/adminStore";
 
-const DEMO_ACCOUNTS = [
-  { phoneNumber: "0383572367", name: "System Administrator", role: "Full Access", color: "indigo" },
-];
-
 function FloatingOrb({ className, delay = 0 }: { className: string; delay?: number }) {
   return (
     <div
@@ -101,12 +97,6 @@ export default function AdminLoginPage() {
     }
   };
 
-  const fillDemo = (acc: (typeof DEMO_ACCOUNTS)[0]) => {
-    setPhoneNumber(acc.phoneNumber);
-    setPassword("AdminPassword123");
-    setError("");
-  };
-
   const isReady = mounted && phoneNumber.trim() && password.trim();
 
   return (
@@ -188,7 +178,7 @@ export default function AdminLoginPage() {
                     onFocus={() => setFocusedField("phone")}
                     onBlur={() => setFocusedField(null)}
                     required
-                    placeholder="0383572367"
+                    placeholder="0867674359"
                     className={`w-full pl-10 pr-4 py-3 rounded-xl bg-slate-800/60 border text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none transition-all duration-200 ${
                       focusedField === "phone"
                         ? "border-indigo-500/60 ring-2 ring-indigo-500/20 shadow-lg shadow-indigo-500/10"
@@ -267,50 +257,6 @@ export default function AdminLoginPage() {
                 </span>
               </button>
             </form>
-          </div>
-        </div>
-
-        {/* Demo accounts */}
-        <div className="mt-6 relative">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
-            <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">
-              Demo Access
-            </span>
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
-          </div>
-
-          <div className="grid grid-cols-1 gap-2.5">
-            {DEMO_ACCOUNTS.map((acc) => (
-              <button
-                key={acc.phoneNumber}
-                type="button"
-                onClick={() => fillDemo(acc)}
-                className="group relative flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 hover:border-indigo-500/40 hover:bg-slate-900/80 transition-all duration-200 text-left overflow-hidden"
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                <div className={`shrink-0 flex items-center justify-center h-9 w-9 rounded-xl border transition-colors ${
-                  acc.color === "indigo"
-                    ? "bg-indigo-500/20 border-indigo-500/30 text-indigo-400"
-                    : "bg-cyan-500/20 border-cyan-500/30 text-cyan-400"
-                }`}>
-                  <Shield size={14} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">{acc.name}</p>
-                  <p className="text-[11px] text-slate-500 font-mono">{acc.phoneNumber}</p>
-                </div>
-                <div className="shrink-0 flex items-center gap-2">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                    acc.role === "Full Access"
-                      ? "text-indigo-400 bg-indigo-500/10 border-indigo-500/30"
-                      : "text-cyan-400 bg-cyan-500/10 border-cyan-500/30"
-                  }`}>
-                    {acc.role}
-                  </span>
-                </div>
-              </button>
-            ))}
           </div>
         </div>
 
