@@ -1,56 +1,153 @@
-// services/walletService.ts
-import type { Wallet } from "@/models/wallet";
+import http from '@/lib/http';
+import type { Wallet } from '@/models/wallet';
 
-const MOCK_USERS_KEY = "mock_users";
-const WALLET_KEY = "ewallet_wallet";
-
-function loadMockUsers() {
-  if (typeof window === "undefined") return {};
-  const stored = localStorage.getItem(MOCK_USERS_KEY);
-  return stored ? JSON.parse(stored) : {};
+interface WalletApiResponse {
+  message: string;
+  data: Wallet;
 }
 
-function saveMockUsers(users: any) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+export interface TopUpPayload {
+  amount: number;
+  linkedBankId?: string;
+  method?: 'bank_transfer' | 'credit_card' | 'debit_card' | 'voucher';
+  description?: string;
+}
+
+export interface WithdrawPayload {
+  amount: number;
+  linkedBankId?: string;
+  description?: string;
+}
+
+export interface TransferPayload {
+  toAccountNumber: string;
+  amount: number;
+  description?: string;
+}
+
+export interface PaymentPayload {
+  amount: number;
+  type: 'bill' | 'merchant' | 'subscription';
+  merchantId?: string;
+  billCode?: string;
+  description?: string;
+}
+
+export interface UpdateLimitsPayload {
+  dailyLimit?: number;
+  monthlyLimit?: number;
+}
+
+export interface TransactionResult {
+  id: string;
+  type?: string;
+  amount?: number;
+  status: string;
+  createdAt: string;
+}
+
+interface WalletSnapshot {
+  id: string;
+  balance: number;
+}
+
+export interface TopUpResult {
+  message: string;
+  data: {
+    transactionId: string;
+    status: string;
+    amount: number;
+    bankCode?: string;
+    accountNumber?: string;
+    wallet?: WalletSnapshot;
+  };
+}
+
+export interface WithdrawResult {
+  message: string;
+  data: {
+    transactionId: string;
+    status: string;
+    amount: number;
+    bankCode?: string;
+    wallet?: WalletSnapshot;
+  };
+}
+
+export interface TransferResult {
+  message: string;
+  data: {
+    transferId: string;
+    amount: number;
+    recipient: { name: string; accountNumber: string };
+    transaction: TransactionResult;
+    wallet: WalletSnapshot;
+  };
+}
+
+export interface PaymentResult {
+  message: string;
+  data: {
+    paymentId: string;
+    transaction: TransactionResult;
+    wallet: WalletSnapshot;
+  };
+}
+
+export interface UpdateLimitsResult {
+  message: string;
+  data: Pick<
+    Wallet,
+    'id' | 'dailyLimit' | 'monthlyLimit' | 'currentDailyUsage' | 'currentMonthlyUsage'
+  >;
+}
+
+export interface RecipientLookupResult {
+  accountNumber: string;
+  name: string;
 }
 
 class WalletService {
   async getWallet(): Promise<Wallet | null> {
-    if (typeof window === "undefined") return null;
-    const walletStr = localStorage.getItem(WALLET_KEY);
-    return walletStr ? JSON.parse(walletStr) : null;
+    try {
+      const { data } = await http.get<WalletApiResponse>('/api/v1/wallets/me');
+      return data.data;
+    } catch {
+      return null;
+    }
   }
 
-  async updateBalance(amount: number, type: "deposit" | "withdraw" | "transfer"): Promise<Wallet> {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    let wallet = await this.getWallet();
-    if (!wallet) throw new Error("Wallet not found");
+  async lookupRecipient(accountNumber: string): Promise<RecipientLookupResult> {
+    const { data } = await http.get<{
+      message: string;
+      data: RecipientLookupResult;
+    }>(`/api/v1/wallets/lookup?accountNumber=${encodeURIComponent(accountNumber)}`);
+    return data.data;
+  }
 
-    let newBalance = wallet.balance;
-    if (type === "deposit") newBalance += amount;
-    else if (type === "withdraw" || type === "transfer") {
-      if (wallet.balance < amount) throw new Error("Insufficient balance");
-      newBalance -= amount;
-    }
+  async topUp(payload: TopUpPayload): Promise<TopUpResult> {
+    const { data } = await http.post<TopUpResult>('/api/v1/wallets/top-up', payload);
+    return data;
+  }
 
-    const updatedWallet: Wallet = {
-      ...wallet,
-      balance: newBalance,
-      updatedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(WALLET_KEY, JSON.stringify(updatedWallet));
+  async withdraw(payload: WithdrawPayload): Promise<WithdrawResult> {
+    const { data } = await http.post<WithdrawResult>('/api/v1/wallets/withdraw', payload);
+    return data;
+  }
 
-    // Also update in mock users storage for consistency
-    const users = loadMockUsers();
-    for (const email in users) {
-      if (users[email].wallet.id === wallet.id) {
-        users[email].wallet = updatedWallet;
-        break;
-      }
-    }
-    saveMockUsers(users);
-    return updatedWallet;
+  async transfer(payload: TransferPayload): Promise<TransferResult> {
+    const { data } = await http.post<TransferResult>('/api/v1/wallets/transfer', payload);
+    return data;
+  }
+
+  async payment(payload: PaymentPayload): Promise<PaymentResult> {
+    const { data } = await http.post<PaymentResult>('/api/v1/wallets/payment', payload);
+    return data;
+  }
+
+  async updateLimits(payload: UpdateLimitsPayload): Promise<UpdateLimitsResult> {
+    const { data } = await http.patch<UpdateLimitsResult>('/api/v1/wallets/limits', payload);
+    return data;
   }
 }
 

@@ -3,16 +3,25 @@ import type { ID, TransactionStatus, TransactionType, Currency, Timestamps } fro
 
 export interface Transaction extends Timestamps {
   id: ID;
-  userId: ID; // chủ sở hữu giao dịch
+  userId: ID;
   walletId: ID;
-  type: TransactionType;
-  status: TransactionStatus;
-  amount: number; // số tiền (đơn vị nhỏ nhất)
+  fromWalletId?: ID;
+  toWalletId?: ID;
+  referenceCode?: string;
+  failureReason?: string | null;
+  recipientName?: string;
+  senderName?: string;
+  type: TransactionType | string;
+  status: TransactionStatus | string;
+  amount: number;
   fee?: number;
-  currency: Currency;
-  referenceId?: string; // ID của bản ghi liên quan (transferId, topupId, paymentId)
+  currency: Currency | string;
+  referenceId?: string;
   description?: string;
-  metadata?: Record<string, any>; // linh hoạt chứa thông tin thêm
+  metadata?: Record<string, unknown>;
   completedAt?: string;
   cancelledAt?: string;
+  // transfer-specific fields (used by TransferSuccess display)
+  fromWalletAccountNumber?: string | null;
+  toWalletAccountNumber?: string | null;
 }

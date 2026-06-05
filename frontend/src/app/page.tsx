@@ -1,10 +1,13 @@
 // app/page.tsx
 import Link from "next/link";
 import { ArrowRight, Shield, Zap, Users, Sparkles } from "lucide-react";
+import  LandingHeader  from "@/components/LandingHeader";
 
 export default function LandingPage() {
   return (
     <div className="min-h-dvh bg-surface-bg">
+      {/* Fixed header */}
+      <LandingHeader />
       {/* Background decorations */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -left-40 -top-40 h-125 w-125 rounded-full bg-brand-default/5 blur-[120px]" />
@@ -40,9 +43,9 @@ export default function LandingPage() {
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Link
               href="/auth/login"
-              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-brand-default px-6 py-3 text-sm font-semibold text-brand-500 shadow-lg shadow-brand-default/30 transition-all hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-default/40"
+              className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-brand-default px-6 py-3 text-sm font-semibold shadow-lg shadow-brand-default/30 transition-all hover:scale-[1.03] hover:shadow-xl hover:shadow-brand-default/40"
             >
-              <span className="relative z-10 flex items-center gap-2">
+              <span className="relative z-10 flex items-center gap-2 text-white">
                 Get Started
                 <ArrowRight
                   size={16}
@@ -69,6 +72,13 @@ export default function LandingPage() {
               <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
               99.99% Uptime
             </span>
+            <a
+              href="/login"
+              className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 transition-colors"
+            >
+              <Shield size={14} />
+              Admin Portal
+            </a>
           </div>
         </div>
 

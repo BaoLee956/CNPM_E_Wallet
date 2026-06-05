@@ -20,10 +20,11 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  getMe(@Request() req: any) {
+  async getMe(@Request() req: any) {
+    const userWithWallet = await this.authService.getMe(req.user.id);
     return {
       message: 'Lấy thông tin thành công',
-      user: req.user,
+      data: userWithWallet,
     };
   }
 }

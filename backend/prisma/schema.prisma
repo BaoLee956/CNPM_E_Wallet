@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // =============================================
@@ -78,21 +79,22 @@ model User {
   lastLoginAt      DateTime?
   twoFactorEnabled Boolean?  @default(false)
   twoFactorSecret  String?
-  passwordHash     String    // Thêm trường này cho đăng nhập
+  passwordHash     String // Thêm trường này cho đăng nhập
 
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  deletedAt        DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  wallets          Wallet[]
-  transactions     Transaction[]
-  transfersSent    Transfer[] @relation("TransferSender")
-  transfersRecv    Transfer[] @relation("TransferReceiver")
-  topUps           TopUp[]
-  payments         Payment[]
-  notifications    Notification[]
-  adminProfile     Admin?
-  sessions         UserSession[]
+  wallets       Wallet[]
+  transactions  Transaction[]
+  transfersSent Transfer[]     @relation("TransferSender")
+  transfersRecv Transfer[]     @relation("TransferReceiver")
+  topUps        TopUp[]
+  payments      Payment[]
+  notifications Notification[]
+  adminProfile  Admin?
+  sessions      UserSession[]
+  linkedBanks   LinkedBank[]
 
   @@map("users")
 }
@@ -109,46 +111,45 @@ model Wallet {
   currentDailyUsage   Int?     @default(0)
   currentMonthlyUsage Int?     @default(0)
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user                User     @relation(fields: [userId], references: [id])
-  
-  transactions        Transaction[]
-  transfersFrom       Transfer[] @relation("WalletTransferFrom")
-  transfersTo         Transfer[] @relation("WalletTransferTo")
-  topUps              TopUp[]
-  payments            Payment[]
+  user User @relation(fields: [userId], references: [id])
+
+  transactions  Transaction[]
+  transfersFrom Transfer[]    @relation("WalletTransferFrom")
+  transfersTo   Transfer[]    @relation("WalletTransferTo")
+  topUps        TopUp[]
+  payments      Payment[]
 
   @@map("wallets")
 }
 
 model Transaction {
-  id             String            @id @default(uuid())
-  userId         String
-  walletId       String
-  fromWalletId   String?
-  toWalletId     String?
-  referenceCode  String?           @unique
-  failureReason  String?
-  recipientName  String?
-  senderName     String?
-  type           TransactionType
-  status         TransactionStatus @default(pending)
-  amount         Int
-  fee            Int?              @default(0)
-  currency       Currency          @default(VND)
-  referenceId    String?
-  description    String?
-  metadata       Json?
-  completedAt    DateTime?
-  cancelledAt    DateTime?
+  id                String            @id @default(uuid())
+  userId            String
+  walletId          String
+  fromWalletId      String?
+  toWalletId        String?
+  referenceCode     String?           @unique
+  failureReason     String?
+  recipientName     String?
+  senderName        String?
+  type              TransactionType
+  status            TransactionStatus @default(pending)
+  amount            Int
+  fee               Int?              @default(0)
+  currency          Currency          @default(VND)
+  referenceId       String?
+  description       String?
+  metadata          Json?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-
-  user           User              @relation(fields: [userId], references: [id])
-  wallet         Wallet            @relation(fields: [walletId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  wallet Wallet @relation(fields: [walletId], references: [id])
 
   @@map("transactions")
 }
@@ -167,13 +168,13 @@ model Transfer {
   counterpartTransactionId String            @unique
   completedAt              DateTime?
 
-  createdAt                DateTime          @default(now())
-  updatedAt                DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  fromUser                 User              @relation("TransferSender", fields: [fromUserId], references: [id])
-  toUser                   User              @relation("TransferReceiver", fields: [toUserId], references: [id])
-  fromWallet               Wallet            @relation("WalletTransferFrom", fields: [fromWalletId], references: [id])
-  toWallet                 Wallet            @relation("WalletTransferTo", fields: [toWalletId], references: [id])
+  fromUser   User   @relation("TransferSender", fields: [fromUserId], references: [id])
+  toUser     User   @relation("TransferReceiver", fields: [toUserId], references: [id])
+  fromWallet Wallet @relation("WalletTransferFrom", fields: [fromWalletId], references: [id])
+  toWallet   Wallet @relation("WalletTransferTo", fields: [toWalletId], references: [id])
 
   @@map("transfers")
 }
@@ -189,11 +190,11 @@ model TopUp {
   transactionId     String            @unique
   completedAt       DateTime?
 
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user              User              @relation(fields: [userId], references: [id])
-  wallet            Wallet            @relation(fields: [walletId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  wallet Wallet @relation(fields: [walletId], references: [id])
 
   @@map("top_ups")
 }
@@ -212,30 +213,30 @@ model Payment {
   transactionId String            @unique
   completedAt   DateTime?
 
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user          User              @relation(fields: [userId], references: [id])
-  wallet        Wallet            @relation(fields: [walletId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+  wallet Wallet @relation(fields: [walletId], references: [id])
 
   @@map("payments")
 }
 
 model Notification {
-  id        String           @id @default(uuid())
-  userId    String
-  title     String
-  message   String
-  type      NotificationType
-  isRead    Boolean          @default(false)
-  readAt    DateTime?
-  link      String?
-  metadata  Json?
+  id       String           @id @default(uuid())
+  userId   String
+  title    String
+  message  String
+  type     NotificationType
+  isRead   Boolean          @default(false)
+  readAt   DateTime?
+  link     String?
+  metadata Json?
 
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user      User             @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("notifications")
 }
@@ -246,11 +247,11 @@ model Admin {
   role        AdminRole
   permissions String[]
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  user        User      @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("admins")
 }
@@ -265,23 +266,58 @@ model UserSession {
   isRevoked  Boolean   @default(false)
   revokedAt  DateTime?
 
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user       User      @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@map("user_sessions")
 }
 
 model SystemSetting {
-  id          String   @id @default(uuid())
-  key         String   @unique
+  id          String  @id @default(uuid())
+  key         String  @unique
   value       Json
   description String?
-  isPublic    Boolean  @default(false)
+  isPublic    Boolean @default(false)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("system_settings")
+}
+
+model LinkedBank {
+  id            String    @id @default(uuid())
+  userId        String
+  bankCode      String
+  accountNumber String
+  accountName   String
+  isDefault     Boolean   @default(false)
+  isVerified    Boolean   @default(true)
+  linkedAt      DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  user          User      @relation(fields: [userId], references: [id])
+  @@unique([userId, bankCode, accountNumber])
+  @@map("linked_banks")
+}
+
+model GatewayTransaction {
+  id                  String            @id @default(uuid())
+  userId              String
+  walletId            String
+  transactionId       String            @unique
+  gatewayTxId         String?           @unique
+  type                String
+  bankCode            String
+  accountNumber       String
+  amount              Int
+  status              TransactionStatus @default(pending)
+  callbackReceivedAt  DateTime?
+  gatewayRef          String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  @@map("gateway_transactions")
 }

@@ -1,14 +1,11 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
     constructor() {
-        const adapter = new PrismaPg({
-            connectionString: process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/ewallet',
-        });
-        super({ adapter });
+        // Chỉ cần gọi super() trống, Prisma sẽ tự động nhận DATABASE_URL từ file .env
+        super();
     }
 
     async onModuleInit() {

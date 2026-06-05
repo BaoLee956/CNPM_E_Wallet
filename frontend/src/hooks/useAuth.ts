@@ -1,8 +1,6 @@
 // hooks/useAuth.ts
 import { useAuthStore } from "@/stores/authStore";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { walletService } from "@/services/walletService";
 
 export function useAuth() {
   const router = useRouter();
@@ -18,19 +16,9 @@ export function useAuth() {
     checkAuth,
     clearError,
     updateWallet,
+    updateUser,
+    refreshWallet,
   } = useAuthStore();
-
-  useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
-      checkAuth();
-    }
-  }, []);
-
-  const refreshWallet = async () => {
-    const freshWallet = await walletService.getWallet();
-    if (freshWallet) updateWallet(freshWallet);
-    return freshWallet;
-  };
 
   const redirectToDashboard = () => router.push("/home");
   const redirectToLogin = () => router.push("/auth/login");
@@ -46,8 +34,9 @@ export function useAuth() {
     logout,
     checkAuth,
     clearError,
-    refreshWallet,
     redirectToDashboard,
     redirectToLogin,
+    updateWallet,
+    updateUser,
   };
 }

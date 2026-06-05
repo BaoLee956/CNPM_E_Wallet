@@ -4,6 +4,9 @@
    CustomerLayout — mobile-first shell with bottom navigation
    ============================================================ */
 
+import type { Wallet } from "@/models/wallet";
+import type { User } from "@/models/user";
+
 interface CustomerNavItem {
   href: string;
   label: string;

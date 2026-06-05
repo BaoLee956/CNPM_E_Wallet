@@ -1,169 +1,143 @@
-// services/authService.ts
-import type { User } from "@/models/user";
-import type { Wallet } from "@/models/wallet";
-import { setCookie, deleteCookie } from "@/utils/cookie";
+import http from '@/lib/http';
+import { setToken, removeToken, getToken } from '@/utils/auth-token';
+import type { User } from '@/models/user';
+import type { Wallet } from '@/models/wallet';
 
 export interface LoginCredentials {
-  email: string;
+  phoneNumber: string;
   password: string;
 }
 
 export interface RegisterData {
+  name: string;
+  phoneNumber: string;
   email: string;
   password: string;
-  name: string;
 }
 
 export interface AuthResponse {
   user: User;
   wallet: Wallet;
-  token: string;
+  access_token: string;
+  role: string;
 }
 
-type MockUserRecord = {
-  user: User;
-  wallet: Wallet;
-  password: string;
-};
+interface LoginApiResponse {
+  message: string;
+  access_token: string;
+  role: string;
+}
 
-const MOCK_USERS_KEY = "mock_users";
-const TOKEN_KEY = "ewallet_token";
-const USER_KEY = "ewallet_user";
-const WALLET_KEY = "ewallet_wallet";
-
-// Helper: load mock users from localStorage
-function loadMockUsers(): Record<string, MockUserRecord> {
-  if (typeof window === "undefined") return {};
-  const stored = localStorage.getItem(MOCK_USERS_KEY);
-  if (stored) return JSON.parse(stored);
-  
-  // Default user
-  const defaultUser: MockUserRecord = {
-    user: {
-      id: "1",
-      email: "user@example.com",
-      name: "John Doe",
-      avatar: "https://ui-avatars.com/api/?name=John+Doe&background=1aaba3&color=fff",
-      createdAt: new Date().toISOString(),
-    },
-    wallet: {
-      id: "wallet_1",
-      userId: "1",
-      balance: 1250000,
-      currency: "VND",
-      accountNumber: "198273645901",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    password: "123456",
+interface RegisterApiResponse {
+  message: string;
+  user: {
+    id: string;
+    phoneNumber: string;
+    name: string;
+    role: string;
   };
-  const initial = { "user@example.com": defaultUser };
-  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(initial));
-  return initial;
+  wallet: {
+    id: string;
+    accountNumber: string;
+    balance: number;
+  };
 }
 
-function saveMockUsers(users: Record<string, MockUserRecord>) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+interface MeApiResponse {
+  message: string;
+  data: User & { wallets: Wallet[] };
+}
+
+interface WalletApiResponse {
+  message: string;
+  data: Wallet;
 }
 
 class AuthService {
-  private getMockUsers(): Record<string, MockUserRecord> {
-    return loadMockUsers();
-  }
-
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    const users = this.getMockUsers();
-    const record = users[credentials.email];
-    if (record && record.password === credentials.password) {
-      const response = {
-        user: record.user,
-        wallet: record.wallet,
-        token: `mock-jwt-${Date.now()}`,
+    try {
+      const { data } = await http.post<LoginApiResponse>('/api/v1/auth/login', {
+        phoneNumber: credentials.phoneNumber,
+        password: credentials.password,
+      });
+      setToken(data.access_token);
+
+      const user = await this.getCurrentUser();
+      const wallet = await this.getCurrentWallet();
+      if (!user || !wallet) throw new Error('Failed to fetch user data');
+
+      return {
+        user,
+        wallet,
+        access_token: data.access_token,
+        role: data.role,
       };
-      this.setSession(response);
-      return response;
+    } catch (error: any) {
+      throw this.normalizeError(error);
     }
-    throw new Error("Invalid email or password");
   }
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    const users = this.getMockUsers();
-    if (users[data.email]) {
-      throw new Error("Email already exists");
+    try {
+      await http.post<RegisterApiResponse>('/api/v1/auth/register', {
+        name: data.name,
+        phoneNumber: data.phoneNumber,
+        email: data.email,
+        password: data.password,
+      });
+      // Automatically login after registration
+      const loginRes = await this.login({
+        phoneNumber: data.phoneNumber,
+        password: data.password,
+      });
+      return loginRes;
+    } catch (error: any) {
+      throw this.normalizeError(error);
     }
-
-    const newUser: User = {
-      id: String(Date.now()),
-      email: data.email,
-      name: data.name,
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name)}&background=1aaba3&color=fff`,
-      createdAt: new Date().toISOString(),
-    };
-
-    const newWallet: Wallet = {
-      id: `wallet_${Date.now()}`,
-      userId: newUser.id,
-      balance: 0,
-      currency: "VND",
-      accountNumber: Math.floor(Math.random() * 1000000000000).toString().padStart(12, "0"),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    const newRecord: MockUserRecord = {
-      user: newUser,
-      wallet: newWallet,
-      password: data.password,
-    };
-
-    users[data.email] = newRecord;
-    saveMockUsers(users);
-
-    const response = { user: newUser, wallet: newWallet, token: `mock-jwt-${Date.now()}` };
-    this.setSession(response);
-    return response;
   }
 
   async logout(): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    this.clearSession();
+    removeToken();
   }
 
   async getCurrentUser(): Promise<User | null> {
-    if (typeof window === "undefined") return null;
-    const userStr = localStorage.getItem(USER_KEY);
-    return userStr ? JSON.parse(userStr) : null;
+    try {
+      const { data } = await http.get<MeApiResponse>('/api/v1/auth/me');
+      return data.data;
+    } catch {
+      return null;
+    }
   }
 
   async getCurrentWallet(): Promise<Wallet | null> {
-    if (typeof window === "undefined") return null;
-    const walletStr = localStorage.getItem(WALLET_KEY);
-    return walletStr ? JSON.parse(walletStr) : null;
+    try {
+      const { data } = await http.get<WalletApiResponse>('/api/v1/wallets/me');
+      return data.data;
+    } catch {
+      return null;
+    }
   }
 
   async verifyToken(): Promise<boolean> {
-    const token = localStorage.getItem(TOKEN_KEY);
-    return !!token;
+    const token = getToken();   
+    if (!token) return false;
+    try {
+      await this.getCurrentUser();
+      return true;
+    } catch {
+      return false;
+    }
   }
 
-  private setSession(response: AuthResponse): void {
-    localStorage.setItem(TOKEN_KEY, response.token);
-    localStorage.setItem(USER_KEY, JSON.stringify(response.user));
-    localStorage.setItem(WALLET_KEY, JSON.stringify(response.wallet));
-    setCookie('auth_token', response.token);
-    setCookie('user_id', response.user.id);
-  }
-
-  private clearSession(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(WALLET_KEY);
-    deleteCookie('auth_token');
-    deleteCookie('user_id');
+  private normalizeError(error: any): Error {
+    const message = error.response?.data?.message;
+    if (typeof message === 'string') return new Error(message);
+    if (Array.isArray(message)) return new Error(message.join(', '));
+    return new Error(error.message || 'Đã xảy ra lỗi, vui lòng thử lại');
   }
 }
 
 export const authService = new AuthService();
+
+// No-op for backward compatibility
+export const seedDefaultUser = () => {};
