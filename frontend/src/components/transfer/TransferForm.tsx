@@ -10,6 +10,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useToast } from "@/hooks/useToast";
 import { Button, Input, Card } from "@/components/ui";
 import {
   TransactionConfirmSheet,
@@ -37,6 +38,7 @@ export function TransferForm({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [localError, setLocalError] = useState("");
+  const { showToast } = useToast();
 
   // Recipient lookup state
   const [recipientName, setRecipientName] = useState<string | null>(null);
@@ -87,23 +89,33 @@ export function TransferForm({
   }, [toAccountNumber]);
 
   // ── Bước 1: validate → mở sheet ────────────────────────────────────────
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/[^0-9]/g, "");
+    setAmount(val);
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError("");
 
     if (!toAccountNumber.trim()) {
-      setLocalError("Vui lòng nhập số tài khoản người nhận");
+      const msg = "Vui lòng nhập số tài khoản người nhận";
+      setLocalError(msg);
+      showToast(msg, "warning");
       return;
     }
     if (lookupError || !recipientName) {
-      setLocalError(
-        "Không tìm thấy tài khoản người nhận. Kiểm tra lại số tài khoản.",
-      );
+      const msg =
+        "Không tìm thấy tài khoản người nhận. Kiểm tra lại số tài khoản.";
+      setLocalError(msg);
+      showToast(msg, "warning");
       return;
     }
     const amountNum = parseFloat(amount);
-    if (isNaN(amountNum) || amountNum < 1_000) {
-      setLocalError("Số tiền chuyển tối thiểu là 1,000 VND");
+    if (!amount || isNaN(amountNum) || amountNum < 1_000) {
+      const msg = "Số tiền chuyển tối thiểu là 1,000 VND";
+      setLocalError(msg);
+      showToast(msg, "warning");
       return;
     }
 
@@ -190,10 +202,12 @@ export function TransferForm({
           <div className="space-y-2">
             <Input
               label="Số tiền (VND)"
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               placeholder="0"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={handleAmountChange}
               iconLeft={<Send size={16} />}
               required
               min="1000"

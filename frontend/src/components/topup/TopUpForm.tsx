@@ -10,6 +10,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/useToast";
 import { Button, Input, Card } from "@/components/ui";
 import {
   TransactionConfirmSheet,
@@ -42,6 +43,7 @@ export function TopUpForm({
   const [linkedBanks, setLinkedBanks] = useState<LinkedBank[]>([]);
   const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
   const [loadingBanks, setLoadingBanks] = useState(true);
+  const { showToast } = useToast();
 
   // Confirm sheet state
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -73,37 +75,48 @@ export function TopUpForm({
     : null;
 
   // Bước 1: validate form → mở sheet preview (chưa gọi API)
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount < 10_000) return;
-    if (!selectedBankId) return;
-
-    const payload: TopUpPayload = {
-      amount: numAmount,
-      description: description.trim() || undefined,
-      linkedBankId: selectedBankId,
-    };
-
-    const previewData: TransactionPreview = {
-      type: "topup",
-      amount: numAmount,
-      description: description.trim() || undefined,
-      fee: 0,
-      ...(selectedBank && bankInfo
-        ? {
-            bankName: bankInfo.name,
-            bankColor: bankInfo.color,
-            accountNumber: `**** ${selectedBank.accountNumber.slice(-4)}`,
-            accountName: selectedBank.accountName,
-          }
-        : {}),
-    };
-
-    setPendingPayload(payload);
-    setPreview(previewData);
-    setSheetOpen(true);
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/[^0-9]/g, "");
+    setAmount(val);
   };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  const numAmount = parseFloat(amount);
+
+  if (!amount || isNaN(numAmount) || numAmount < 10_000) {
+    const msg = "Số tiền nạp tối thiểu là 10,000 VND";
+    showToast(msg, "warning");
+    return;
+  }
+
+  if (!selectedBankId) return;
+
+  const payload: TopUpPayload = {
+    amount: numAmount,
+    description: description.trim() || undefined,
+    linkedBankId: selectedBankId,
+  };
+
+  const previewData: TransactionPreview = {
+    type: "topup",
+    amount: numAmount,
+    description: description.trim() || undefined,
+    fee: 0,
+    ...(selectedBank && bankInfo
+      ? {
+          bankName: bankInfo.name,
+          bankColor: bankInfo.color,
+          accountNumber: `**** ${selectedBank.accountNumber.slice(-4)}`,
+          accountName: selectedBank.accountName,
+        }
+      : {}),
+  };
+
+  setPendingPayload(payload);
+  setPreview(previewData);
+  setSheetOpen(true);
+};
 
   // Bước 2: user xác nhận → gọi API thật
   const handleConfirm = async () => {
@@ -198,9 +211,11 @@ export function TopUpForm({
           <div className="space-y-2">
             <Input
               label="Số tiền (VND)"
-              type="number"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={handleAmountChange}
               placeholder="0"
               required
               min="10000"
