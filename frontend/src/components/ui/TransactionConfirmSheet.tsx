@@ -189,10 +189,6 @@ export function TransactionConfirmSheet({
             </>
           )}
 
-          {preview.type === "topup" && !preview.bankName && (
-            <Row label="Nguồn tiền" value="Nạp nhanh (mock)" />
-          )}
-
           {preview.type === "withdraw" && preview.bankName && (
             <>
               <Row label="Ngân hàng nhận" value={preview.bankName} />
