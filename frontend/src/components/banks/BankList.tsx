@@ -119,6 +119,11 @@ export function BankList({ banks, loading, onRefresh }: BankListProps) {
               <p className="text-xs text-tertiary truncate">
                 {bank.accountName}
               </p>
+              {bank.bankBalance != null && (
+                <p className="text-xs text-success font-medium mt-0.5">
+                  Số dư: {bank.bankBalance.toLocaleString("vi-VN")} đ
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-1">

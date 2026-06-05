@@ -28,7 +28,23 @@ export class LinkedBanksService {
       where: { userId, deletedAt: null },
       orderBy: [{ isDefault: 'desc' }, { linkedAt: 'asc' }],
     });
-    return { message: 'Lấy danh sách ngân hàng thành công', data: banks };
+
+    // Lấy số dư thực tế từng ngân hàng
+    const banksWithBalance = await Promise.all(
+      banks.map(async (bank) => {
+        try {
+          const balanceInfo = await this.gateway.getAccountBalance(
+            bank.bankCode,
+            bank.accountNumber,
+          );
+          return { ...bank, bankBalance: balanceInfo.balance };
+        } catch {
+          return { ...bank, bankBalance: null };
+        }
+      }),
+    );
+
+    return { message: 'Lấy danh sách ngân hàng thành công', data: banksWithBalance };
   }
 
   // ─── STEP 1: Xác minh số tài khoản ────────────────────────────────────

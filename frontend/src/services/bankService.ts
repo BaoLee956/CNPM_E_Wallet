@@ -21,6 +21,7 @@ export interface LinkedBank {
   linkedAt: string;
   isDefault: boolean;
   isVerified: boolean;
+  bankBalance?: number | null;
 }
 
 // ─── Static bank list (không đổi) ────────────────────────────────────────────

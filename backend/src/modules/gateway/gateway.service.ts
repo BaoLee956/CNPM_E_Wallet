@@ -57,6 +57,40 @@ export class GatewayService {
     }
   }
 
+  private async get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
+    try {
+      const { data } = await axios.get<GatewayResponse<T>>(
+        `${GATEWAY_URL}/gateway/${endpoint}`,
+        { params, timeout: 10_000 },
+      );
+
+      if (!data.success) {
+        throw new BadRequestException(data.error || 'Lỗi từ cổng thanh toán');
+      }
+
+      return data.data as T;
+    } catch (err) {
+      if (err instanceof BadRequestException || err instanceof NotFoundException) {
+        throw err;
+      }
+
+      const axiosErr = err as AxiosError<GatewayResponse>;
+      const msg =
+        axiosErr.response?.data?.error || 'Không thể kết nối cổng thanh toán';
+      this.logger.error(`Gateway error [GET ${endpoint}]: ${msg}`);
+
+      if (axiosErr.response?.status === 404 || msg.toLowerCase().includes('tài khoản')) {
+        throw new NotFoundException(msg);
+      }
+
+      if (!axiosErr.response) {
+        throw new ServiceUnavailableException(msg);
+      }
+
+      throw new BadRequestException(msg);
+    }
+  }
+
   async verifyAccount(bankCode: string, accountNumber: string) {
     return this.post<{
       bankCode: string;
@@ -104,5 +138,14 @@ export class GatewayService {
       'credit',
       params,
     );
+  }
+
+  async getAccountBalance(bankCode: string, accountNumber: string) {
+    return this.get<{
+      bankCode: string;
+      accountNumber: string;
+      accountName: string;
+      balance: number;
+    }>('account-balance', { bankCode, accountNumber });
   }
 }
