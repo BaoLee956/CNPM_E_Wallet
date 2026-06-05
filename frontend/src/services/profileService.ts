@@ -1,4 +1,3 @@
-// services/profileService.ts
 import http from "@/lib/http";
 import { User } from "@/models/user";
 

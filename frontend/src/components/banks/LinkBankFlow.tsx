@@ -64,6 +64,7 @@ export function LinkBankFlow({ onSuccess, onCancel }: LinkBankFlowProps) {
       setMaskedPhone(phone);
       setStep("confirm_otp");
     } catch (e) {
+      showToast(e instanceof Error ? e.message : "Có lỗi xảy ra", "error");
       // Lỗi đã được interceptor xử lý, không cần showToast ở đây
     } finally {
       setLoading(false);
@@ -80,8 +81,10 @@ export function LinkBankFlow({ onSuccess, onCancel }: LinkBankFlowProps) {
         accountName,
         otp,
       });
+      showToast("Liên kết ngân hàng thành công", "success");
       setStep("success");
     } catch (e) {
+      showToast(e instanceof Error ? e.message : "Có lỗi xảy ra", "error");
       // Lỗi đã được interceptor xử lý
     } finally {
       setLoading(false);
@@ -99,6 +102,7 @@ export function LinkBankFlow({ onSuccess, onCancel }: LinkBankFlowProps) {
       setMaskedPhone(phone);
       showToast("Đã gửi lại OTP", "success");
     } catch (e) {
+      showToast(e instanceof Error ? e.message : "Có lỗi xảy ra", "error");
       // Lỗi đã được interceptor xử lý
     } finally {
       setLoading(false);
