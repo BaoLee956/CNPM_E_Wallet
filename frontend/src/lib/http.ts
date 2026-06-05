@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getToken, removeToken } from '@/utils/auth-token';
 
 const http = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
+  baseURL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000',
   headers: { 'Content-Type': 'application/json' },
 });
 
