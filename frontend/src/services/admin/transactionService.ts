@@ -18,10 +18,18 @@ export const adminTransactionService = {
         params: {
           page: params?.page ?? 1,
           limit: params?.limit ?? 20,
+          search: params?.search ?? undefined,
           status: params?.status ?? undefined,
           type: params?.type ?? undefined,
         },
       }
+    );
+    return res.data;
+  },
+
+  async resolveTransaction(transactionId: string) {
+    const res = await http.post<{ message: string; transaction: { id: string; status: string } }>(
+      `/api/v1/admin/transactions/${transactionId}/resolve`
     );
     return res.data;
   },

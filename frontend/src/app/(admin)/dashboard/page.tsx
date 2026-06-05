@@ -7,7 +7,6 @@ import {
 import { useAdminStore } from "@/stores/adminStore";
 import { useAdminStats } from "@/hooks/useAdminStats";
 
-// Skeleton card component
 function SkeletonCard() {
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 animate-pulse">
@@ -59,16 +58,13 @@ export default function DashboardPage() {
     fetchStatistics();
   }, [fetchStatistics]);
 
-  // Fallback to store data if API fails
   const stats = statistics;
   const fallbackUsers = users.length > 0;
   const fallbackTx = transactions.length > 0;
 
-  // Stats from BE or fallback
   const totalUsers = stats?.totalUsers ?? (fallbackUsers ? users.length : 0);
-  const activeUsers = stats?.totalUsers ?? (fallbackUsers ? users.filter((u) => u.status === "Active").length : 0);
-  const lockedUsers = fallbackUsers ? users.filter((u) => u.status === "Locked").length : 0;
-  const suspiciousUsers = fallbackUsers ? users.filter((u) => u.status === "Suspicious").length : 0;
+  const activeUsers = stats?.activeUsers ?? (fallbackUsers ? users.filter((u) => u.status === "Active").length : 0);
+  const lockedUsers = stats?.lockedUsers ?? (fallbackUsers ? users.filter((u) => u.status === "Locked").length : 0);
 
   const pendingTx = stats?.pendingTransactions ?? (fallbackTx ? transactions.filter((t) => t.status === "Pending").length : 0);
   const timeoutTx = fallbackTx ? transactions.filter((t) => t.status === "Timeout").length : 0;
@@ -76,11 +72,11 @@ export default function DashboardPage() {
 
   const revToday = stats?.revenueToday ?? 0;
   const revYesterday = stats?.revenueYesterday ?? 0;
-  const revDoD = revYesterday > 0 ? ((revToday - revYesterday) / revYesterday) * 100 : 0;
+  const revDoD = stats?.revenueDoD ?? (revYesterday > 0 ? ((revToday - revYesterday) / revYesterday) * 100 : 0);
 
   const txToday = stats?.transactionsToday ?? 0;
   const txYesterday = stats?.transactionsYesterday ?? 0;
-  const txDoD = txYesterday > 0 ? ((txToday - txYesterday) / txYesterday) * 100 : 0;
+  const txDoD = stats?.txDoD ?? (txYesterday > 0 ? ((txToday - txYesterday) / txYesterday) * 100 : 0);
 
   const revTrendLabel = revDoD >= 0 ? `+${revDoD.toFixed(1)}%` : `${revDoD.toFixed(1)}%`;
   const txTrendLabel = txDoD >= 0 ? `+${txDoD.toFixed(1)}%` : `${txDoD.toFixed(1)}%`;
@@ -89,7 +85,6 @@ export default function DashboardPage() {
     total: totalUsers,
     active: activeUsers,
     locked: lockedUsers,
-    suspicious: suspiciousUsers,
   };
 
   const txCounts = {
@@ -103,7 +98,6 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white">Dashboard</h1>
         <p className="text-sm text-slate-400 mt-1">
@@ -115,7 +109,6 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Top stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {isLoading ? (
           <>
@@ -163,7 +156,7 @@ export default function DashboardPage() {
               {
                 label: "Total Users",
                 value: counts.total.toLocaleString(),
-                sub: `${counts.active} active`,
+                sub: `${counts.active} active · ${counts.locked} locked`,
                 icon: <Users size={20} />,
                 border: "border-indigo-500/30",
                 iconBg: "bg-indigo-500/20",
@@ -194,9 +187,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Middle row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Recent activity */}
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
@@ -257,108 +248,46 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* System status */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white mb-5">System Status</h3>
-          <div className="space-y-4">
-            {[
-              { label: "Payment Gateway", status: "Operational", color: "emerald" },
-              { label: "Napas Bank API", status: stats ? "Operational" : "Checking...", color: "emerald" },
-              { label: "Visa/Mastercard", status: "Degraded", color: "amber" },
-              { label: "MoMo Integration", status: stats ? "Operational" : "Checking...", color: "emerald" },
-              { label: "ZaloPay API", status: "Down", color: "rose" },
-              { label: "Internal Wallet", status: stats ? "Operational" : "Checking...", color: "emerald" },
-            ].map((sys) => (
-              <div key={sys.label} className="flex items-center justify-between">
-                <span className="text-xs text-slate-400">{sys.label}</span>
-                <div className="flex items-center gap-1.5">
-                  <span className={`h-2 w-2 rounded-full ${
-                    sys.color === "emerald" ? "bg-emerald-400 animate-pulse" :
-                    sys.color === "amber" ? "bg-amber-400" :
-                    "bg-rose-400"
-                  }`} />
-                  <span className={`text-xs font-semibold ${
-                    sys.color === "emerald" ? "text-emerald-400" :
-                    sys.color === "amber" ? "text-amber-400" :
-                    "text-rose-400"
-                  }`}>{sys.status}</span>
+        <div className="space-y-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <ShieldCheck size={16} className="text-emerald-400" />
+              <h3 className="text-sm font-bold text-white">User Status</h3>
+            </div>
+            <div className="space-y-3">
+              {[
+                { label: "Active users", value: counts.active, color: "text-emerald-400" },
+                { label: "Locked users", value: counts.locked, color: "text-rose-400" },
+                { label: "New this month", value: stats?.newUsersThisMonth ?? 0, color: "text-indigo-400" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">{item.label}</span>
+                  <span className={`text-sm font-mono font-semibold ${item.color}`}>{item.value}</span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          <div className="mt-6 pt-5 border-t border-slate-800">
-            <div className="flex items-center gap-2 mb-3">
-              <Activity size={13} className="text-indigo-400" />
-              <span className="text-xs font-semibold text-slate-300">Platform Health</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity size={16} className="text-cyan-400" />
+              <h3 className="text-sm font-bold text-white">Transaction Health</h3>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-500 to-indigo-500 h-2 rounded-full" style={{ width: stats ? "87%" : "50%" }} />
-            </div>
-            <div className="flex justify-between mt-1.5">
-              <span className="text-[10px] text-slate-600">0%</span>
-              <span className="text-[10px] text-emerald-400 font-semibold">
-                {isLoading ? "Loading..." : "87% uptime"}
-              </span>
-              <span className="text-[10px] text-slate-600">100%</span>
+            <div className="space-y-3">
+              {[
+                { label: "Pending", value: txCounts.pending, color: "text-amber-400" },
+                { label: "Processing", value: txCounts.processing, color: "text-blue-400" },
+                { label: "Resolved", value: txCounts.resolved, color: "text-emerald-400" },
+                { label: "Failed/Timeout", value: txCounts.timeout, color: "text-rose-400" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">{item.label}</span>
+                  <span className={`text-sm font-mono font-semibold ${item.color}`}>{item.value}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Bottom: Quick access */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          {
-            label: "User Management",
-            sub: `${counts.suspicious} suspicious · ${counts.locked} locked`,
-            href: "/users",
-            icon: <Users size={22} />,
-            color: "indigo",
-            border: "border-indigo-500/30",
-            bg: "bg-indigo-500/10",
-            text: "text-indigo-400",
-          },
-          {
-            label: "Transaction Audit",
-            sub: `${txCounts.pending + txCounts.timeout} need audit`,
-            href: "/transactions",
-            icon: <Clock size={22} />,
-            color: "amber",
-            border: "border-amber-500/30",
-            bg: "bg-amber-500/10",
-            text: "text-amber-400",
-          },
-          {
-            label: "Reports & Export",
-            sub: "Financial dashboards & analytics",
-            href: "/reports",
-            icon: <TrendingUp size={22} />,
-            color: "emerald",
-            border: "border-emerald-500/30",
-            bg: "bg-emerald-500/10",
-            text: "text-emerald-400",
-          },
-        ].map((item) => (
-          <a
-            key={item.href}
-            href={item.href}
-            className={`group bg-slate-900 border ${item.border} rounded-2xl p-6 flex items-center gap-4 hover:bg-slate-800 transition-all hover:-translate-y-0.5`}
-          >
-            <div className={`shrink-0 flex items-center justify-center h-12 w-12 rounded-xl ${item.bg}`}>
-              <span className={item.text}>{item.icon}</span>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors">{item.label}</p>
-              <p className="text-xs text-slate-500 mt-0.5">{item.sub}</p>
-            </div>
-            <div className="ml-auto">
-              <div className={`h-7 w-7 rounded-lg ${item.bg} flex items-center justify-center group-hover:translate-x-0.5 transition-transform`}>
-                <span className={`${item.text} text-sm`}>→</span>
-              </div>
-            </div>
-          </a>
-        ))}
       </div>
     </div>
   );

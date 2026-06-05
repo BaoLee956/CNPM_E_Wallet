@@ -40,19 +40,30 @@ export function useAdminTransactions() {
     try {
       await adminTransactionService.refundTransaction(transactionId, { reason });
       updateTransactionStatus(transactionId, 'Refunded');
+      return true;
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ??
         err?.response?.data?.response?.message ??
         'Failed to refund transaction.';
       showToast(msg, 'error');
+      return false;
     }
   }, [updateTransactionStatus, showToast]);
 
   const resolveTransaction = useCallback(async (transactionId: string) => {
-    // BE doesn't have a direct "force resolve" endpoint, so we just update local state
-    updateTransactionStatus(transactionId, 'Resolved');
-    showToast(`Transaction ${transactionId.slice(0, 8)}... marked as Resolved`, 'success');
+    try {
+      await adminTransactionService.resolveTransaction(transactionId);
+      updateTransactionStatus(transactionId, 'Resolved');
+      return true;
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ??
+        err?.response?.data?.response?.message ??
+        'Failed to resolve transaction.';
+      showToast(msg, 'error');
+      return false;
+    }
   }, [updateTransactionStatus, showToast]);
 
   return {

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsInt, Min, IsIn } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsInt, Min, IsIn, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 // DTO cho query tìm kiếm danh sách Users
@@ -36,7 +36,11 @@ export class UpdateUserStatusDto {
 export class QueryTransactionsDto {
   @IsOptional()
   @IsString()
-  @IsIn(['pending', 'success', 'failed', 'cancelled', ''], {
+  search?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['pending', 'success', 'failed', 'cancelled', 'refunded', ''], {
     message: 'Trạng thái không hợp lệ',
   })
   status?: string;
@@ -59,6 +63,23 @@ export class QueryTransactionsDto {
   @IsInt()
   @Min(1)
   limit?: number = 10;
+}
+
+export class QueryStatisticsDto {
+  @IsOptional()
+  @IsString()
+  @IsIn(['today', '7d', '30d', 'custom'], {
+    message: 'Khoảng thời gian không hợp lệ',
+  })
+  range?: string = 'today';
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
 }
 
 // DTO cho Refund
