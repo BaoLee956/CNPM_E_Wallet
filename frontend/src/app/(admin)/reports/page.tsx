@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
 import { Download, TrendingUp, Users, DollarSign, Activity, Calendar, ChevronDown, RefreshCw } from "lucide-react";
 import { YEAR_DATA, DAILY_TARGET, useAdminStore } from "@/stores/adminStore";
+import { useAdminStats } from "@/hooks/useAdminStats";
 import { jsPDF } from "jspdf";
 
 const formatVND = (n: number) =>
@@ -129,11 +130,18 @@ function CircularGauge({ value, label }: { value: number; label: string }) {
 }
 
 export default function ReportsPage() {
+  const { transactions } = useAdminStore();
+  const { statistics, isLoadingStats, fetchStatistics } = useAdminStats();
   const [dateRange, setDateRange] = useState<RangeOption>("7d");
   const [category, setCategory] = useState("revenue");
   const [format, setFormat] = useState<"CSV" | "PDF">("CSV");
-  const { transactions, showToast } = useAdminStore();
+  const { showToast } = useAdminStore();
   const [loading, setLoading] = useState(false);
+
+  // Fetch stats from BE on mount
+  useEffect(() => {
+    fetchStatistics();
+  }, [fetchStatistics]);
 
   const { label: rangeLabel, slice, agg } = RANGE_CONFIG[dateRange];
 
@@ -143,29 +151,46 @@ export default function ReportsPage() {
     return aggregateData(sliced, agg);
   }, [dateRange]);
 
-  // KPI cards: always use last 7 days vs previous 7 days
+  // KPI cards: use BE statistics if available, else fallback to YEAR_DATA
   const kpiData = useMemo(() => {
+    if (statistics) {
+      return {
+        revToday: statistics.revenueToday,
+        revPrev: statistics.revenueYesterday,
+        usersToday: statistics.newUsersToday,
+        usersPrev: 0,
+        totalGtv: 0,
+        totalTx: statistics.transactionsToday,
+        successRate: 99.2,
+        revPct: 0,
+        usersPct: 0,
+      };
+    }
+    // Fallback to YEAR_DATA
     const last7 = YEAR_DATA.slice(-7);
     const prev7 = YEAR_DATA.slice(-14, -7);
-    const sum = (arr: typeof YEAR_DATA, key: keyof DailyEntry) =>
-      arr.reduce((s, d) => s + d[key], 0);
+    type YearEntry = typeof YEAR_DATA[number];
+    const sum = (arr: typeof YEAR_DATA, key: keyof YearEntry) =>
+      arr.reduce((s, d) => s + Number(d[key]), 0);
 
     const revToday = sum(last7, "revenue");
     const revPrev = sum(prev7, "revenue");
     const usersToday = sum(last7, "newUsers");
     const usersPrev = sum(prev7, "newUsers");
-    const revPct = ((revToday - revPrev) / revPrev) * 100;
-    const usersPct = ((usersToday - usersPrev) / usersPrev) * 100;
+    const revPct = revPrev > 0 ? ((revToday - revPrev) / revPrev) * 100 : 0;
+    const usersPct = usersPrev > 0 ? ((usersToday - usersPrev) / usersPrev) * 100 : 0;
     const totalGtv = sum(last7, "gtv");
     const totalTx = sum(last7, "transactions");
     const successRate = ((sum(last7, "transactions") - Math.round(sum(last7, "transactions") * 0.008)) / sum(last7, "transactions")) * 100;
 
-    return { revToday, revPrev, revPct, usersToday, usersPrev, usersPct, totalGtv, totalTx, successRate };
-  }, []);
+    return { revToday, revPrev, usersToday, usersPrev, totalGtv, totalTx, successRate, revPct, usersPct };
+  }, [statistics]);
 
-  // Today-only gauge (always from last day vs daily target)
+  // Today-only gauge (use BE stats if available)
   const todayEntry = YEAR_DATA[YEAR_DATA.length - 1];
-  const todayTargetPct = Math.round((todayEntry.revenue / DAILY_TARGET) * 100);
+  const todayTargetPct = statistics
+    ? Math.round((statistics.revenueToday / DAILY_TARGET) * 100)
+    : Math.round((todayEntry.revenue / DAILY_TARGET) * 100);
 
   const handleExport = async () => {
     setLoading(true);
@@ -557,7 +582,7 @@ export default function ReportsPage() {
               <Calendar size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
               <select
                 value={dateRange}
-                onChange={(e) => setDateRange(e.target.value)}
+                onChange={(e) => setDateRange(e.target.value as RangeOption)}
                 className="pl-9 pr-8 h-10 rounded-xl bg-slate-800 border border-slate-700 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 appearance-none cursor-pointer"
               >
                 <option value="7d">Last 7 days</option>
@@ -614,7 +639,7 @@ export default function ReportsPage() {
 
           {/* Download button */}
           <button
-            onClick={() => handleExport(showToast)}
+            onClick={handleExport}
             disabled={loading}
             className="flex items-center gap-2 h-10 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold text-sm transition-all shadow-lg shadow-indigo-600/30 disabled:shadow-none"
           >

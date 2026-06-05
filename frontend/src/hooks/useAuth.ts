@@ -38,6 +38,5 @@ export function useAuth() {
     redirectToLogin,
     updateWallet,
     updateUser,
-    refreshWallet,
   };
 }

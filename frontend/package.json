@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@types/axios": "^0.9.36",
     "axios": "^1.16.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.17.0",

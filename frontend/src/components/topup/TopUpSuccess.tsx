@@ -4,6 +4,7 @@
 import { Button, Card } from "@/components/ui";
 import { CheckCircle } from "lucide-react";
 import type { TopUpState } from "@/hooks/useTopUp";
+import { formatVND } from "@/utils/format";
 
 interface TopUpSuccessProps {
   state: TopUpState;
@@ -32,10 +33,7 @@ export function TopUpSuccess({ state, onReset }: TopUpSuccessProps) {
             <div className="flex justify-between">
               <span className="text-secondary">Số tiền nạp</span>
               <span className="font-semibold text-primary">
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(state.amount)}
+                {formatVND(state.amount)}
               </span>
             </div>
           )}
@@ -44,10 +42,7 @@ export function TopUpSuccess({ state, onReset }: TopUpSuccessProps) {
             <div className="flex justify-between border-t border-subtle pt-2 mt-2">
               <span className="text-secondary">Số dư mới</span>
               <span className="font-bold text-brand-default">
-                {new Intl.NumberFormat("vi-VN", {
-                  style: "currency",
-                  currency: "VND",
-                }).format(state.newBalance)}
+                {formatVND(state.newBalance)}
               </span>
             </div>
           )}

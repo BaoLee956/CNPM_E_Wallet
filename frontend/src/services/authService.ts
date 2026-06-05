@@ -138,3 +138,6 @@ class AuthService {
 }
 
 export const authService = new AuthService();
+
+// No-op for backward compatibility
+export const seedDefaultUser = () => {};
