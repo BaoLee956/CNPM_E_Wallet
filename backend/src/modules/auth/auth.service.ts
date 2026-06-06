@@ -87,6 +87,10 @@ export class AuthService {
       throw new UnauthorizedException('Số điện thoại hoặc mật khẩu không chính xác');
     }
 
+    if (user.deletedAt) {
+      throw new UnauthorizedException('Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.');
+    }
+
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
       throw new UnauthorizedException('Số điện thoại hoặc mật khẩu không chính xác');
@@ -122,6 +126,10 @@ export class AuthService {
     });
 
     if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
+
+    if (user.deletedAt) {
       throw new NotFoundException('Không tìm thấy người dùng');
     }
 
