@@ -23,7 +23,7 @@
       "bankCode": "TCB",
       "accountNumber": "1234567890",
       "accountName": "LE VAN C",
-      "balance": 28780000,
+      "balance": 27780000,
       "phone": "0923456780",
       "maskedPhone": "****6780"
     },
@@ -370,16 +370,23 @@
       "completedAt": "2026-06-05T13:04:10.566Z",
       "callbackSentAt": "2026-06-05T13:04:13.138Z",
       "callbackStatus": "sent"
+    },
+    {
+      "id": "8d4cbe42-f71a-40e2-8b92-3efaee3e8940",
+      "type": "debit",
+      "bankCode": "TCB",
+      "accountNumber": "1234567890",
+      "amount": 1000000,
+      "status": "success",
+      "referenceId": "ea0c3a1a-2157-4558-b894-4a48a86d446c",
+      "callbackUrl": "http://localhost:3002/api/v1/gateway/webhook",
+      "createdAt": "2026-06-05T19:13:01.930Z",
+      "completedAt": "2026-06-05T19:13:01.969Z",
+      "callbackSentAt": "2026-06-05T19:13:04.539Z",
+      "callbackStatus": "sent"
     }
   ],
   "otpRecords": [
-    {
-      "bankCode": "TCB",
-      "accountNumber": "1234567890",
-      "code": "123456",
-      "expiresAt": "2026-06-04T02:19:47.506Z",
-      "used": true
-    },
     {
       "bankCode": "VCB",
       "accountNumber": "0123456789",
@@ -399,6 +406,13 @@
       "accountNumber": "2345678901",
       "code": "123456",
       "expiresAt": "2026-06-05T12:44:34.453Z",
+      "used": true
+    },
+    {
+      "bankCode": "TCB",
+      "accountNumber": "1234567890",
+      "code": "123456",
+      "expiresAt": "2026-06-05T19:17:03.741Z",
       "used": true
     }
   ]
