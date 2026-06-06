@@ -22,7 +22,7 @@ export function useTransfer() {
       const transferResult = await walletService.transfer(data);
       setResult(transferResult);
       showToast(transferResult.message || "Chuyển tiền thành công", "success");
-      refreshWallet().catch((err) => console.warn("Refresh wallet failed:", err));
+      refreshWallet?.().catch((err) => console.warn("Refresh wallet failed:", err));
       return transferResult;
     } catch (err: any) {
       const msg =
