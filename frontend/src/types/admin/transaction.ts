@@ -2,7 +2,7 @@
 // Admin Transaction Types — BE response shapes
 // ============================================================
 
-export type BeTransactionStatus = 'pending' | 'success' | 'failed' | 'cancelled';
+export type BeTransactionStatus = 'pending' | 'success' | 'failed' | 'cancelled' | 'refunded';
 export type BeTransactionType = 'deposit' | 'withdraw' | 'transfer' | 'payment' | 'refund';
 
 export interface AdminTransactionResponse {
@@ -25,6 +25,7 @@ export interface AdminTransactionResponse {
   metadata: Record<string, unknown> | null;
   completedAt: string | null;
   cancelledAt: string | null;
+  refundedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   user: {
@@ -53,6 +54,10 @@ export interface AdminRefundRequest {
 
 export interface AdminRefundResponse {
   message: string;
+  originalTransaction: {
+    id: string;
+    status: string;
+  };
   refundTransaction: {
     id: string;
     amount: number;
@@ -64,15 +69,4 @@ export interface AdminRefundResponse {
   };
 }
 
-export type TxStatus = 'Pending' | 'Timeout' | 'Processing' | 'Resolved' | 'Refunded';
-
-export interface AdminTransaction {
-  txId: string;
-  timestamp: string;
-  userId: string;
-  userName: string;
-  amount: number;
-  paymentChannel: string;
-  status: TxStatus;
-  errorLogs: string;
-}
+export type TxStatus = 'Pending' | 'Timeout' | 'Resolved' | 'Refunded';

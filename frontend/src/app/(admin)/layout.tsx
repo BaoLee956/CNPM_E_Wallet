@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { LayoutDashboard, Users, ArrowLeftRight, BarChart3, ChevronLeft, Bell, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, ArrowLeftRight, BarChart3, ChevronLeft, Bell, LogOut, Settings } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 import { AdminToast } from "@/components/ui/AdminToast";
 import { NotificationBell } from "@/components/admin/NotificationBell";
 import { adminAuthService } from "@/services/admin/authService";
+import { ChangePasswordModal } from "@/components/admin/ChangePasswordModal";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -24,6 +25,7 @@ export default function AdminRootLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const { toast, clearToast, adminName, adminEmail, notifications } = useAdminStore();
 
   // Auth guard — redirect to login if not authenticated
@@ -134,6 +136,21 @@ export default function AdminRootLayout({
               </div>
             )}
           </div>
+
+          {/* Settings — change password */}
+          <button
+            type="button"
+            title={collapsed ? "Đổi mật khẩu" : undefined}
+            onClick={() => setShowPasswordModal(true)}
+            className={[
+              "flex w-full items-center gap-2.5 rounded-xl px-3 h-9 text-xs text-slate-500",
+              "hover:bg-slate-800 hover:text-slate-300 transition-colors",
+              collapsed ? "justify-center" : "",
+            ].join(" ")}
+          >
+            <Settings size={14} className="shrink-0" />
+            {!collapsed && <span>Đổi mật khẩu</span>}
+          </button>
         </div>
       </aside>
 
@@ -167,6 +184,11 @@ export default function AdminRootLayout({
           type={toast.type}
           onClose={clearToast}
         />
+      )}
+
+      {/* Change Password Modal */}
+      {showPasswordModal && (
+        <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />
       )}
     </div>
   );

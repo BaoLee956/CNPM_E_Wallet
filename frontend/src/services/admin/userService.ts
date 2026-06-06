@@ -6,6 +6,7 @@ import http from '@/lib/http';
 import type {
   AdminUsersListResponse,
   AdminUserResponse,
+  AdminUserDetailResponse,
   AdminUpdateUserStatusRequest,
   AdminUpdateUserStatusResponse,
 } from '@/types/admin/user';
@@ -20,6 +21,11 @@ export const adminUserService = {
         search: params?.search ?? undefined,
       },
     });
+    return res.data;
+  },
+
+  async getUserDetail(userId: string) {
+    const res = await http.get<AdminUserDetailResponse>(`/api/v1/admin/users/${userId}`);
     return res.data;
   },
 

@@ -3,8 +3,9 @@
 // ============================================================
 
 import { useCallback } from 'react';
-import { useAdminStore } from '@/stores/adminStore';
+import { useAdminStore, mapTransaction } from '@/stores/adminStore';
 import { adminStatsService } from '@/services/admin/statsService';
+import type { PaginationParams } from '@/types/admin/notification';
 
 export function useAdminStats() {
   const {
@@ -12,27 +13,35 @@ export function useAdminStats() {
     setStatistics, setLoadingStats, setErrorStats,
   } = useAdminStore();
 
-  const fetchStatistics = useCallback(async () => {
+  const fetchStatistics = useCallback(async (params?: PaginationParams & { range?: string; startDate?: string; endDate?: string }) => {
     setLoadingStats(true);
     setErrorStats(null);
     try {
-      const res = await adminStatsService.getStatistics();
+      const res = await adminStatsService.getStatistics({
+        range: params?.range as 'today' | '7d' | '30d' | 'custom' | undefined,
+        startDate: params?.startDate,
+        endDate: params?.endDate,
+      });
       const d = res.data;
 
       setStatistics({
         totalUsers: d.users.total,
-        newUsersToday: d.users.newToday,
-        newUsersThisMonth: d.users.newThisMonth,
-        totalTransactions: d.transactions.total,
-        transactionsToday: d.transactions.today,
-        pendingTransactions: d.transactions.pending,
-        revenueTotal: d.revenue.totalAmount,
-        revenueToday: d.revenue.todayAmount,
-        feeTotal: d.revenue.totalFee,
-        revenueYesterday: 0,
-        revenueDoD: 0,
-        transactionsYesterday: 0,
-        txDoD: 0,
+        activeUsers: d.users.active,
+        lockedUsers: d.users.locked,
+        newUsersCurrent: d.users.newCurrent,
+        newUsersPrevious: d.users.newPrevious,
+        totalDeposit: d.revenue.totalDeposit,
+        totalWithdraw: d.revenue.totalWithdraw,
+        totalFee: d.revenue.totalFee,
+        totalTransactionCount: d.transactions.totalCount,
+        totalTransactionValue: d.transactions.totalValue,
+        successRate: d.transactions.successRate,
+        failedRate: d.transactions.failedRate,
+        successCount: d.transactions.successCount,
+        failedCount: d.transactions.failedCount,
+        recentTransactions: (d.recentTransactions ?? []).map(mapTransaction),
+        dailySeries: d.dailySeries,
+        range: d.range,
       });
     } catch (err: any) {
       const msg =

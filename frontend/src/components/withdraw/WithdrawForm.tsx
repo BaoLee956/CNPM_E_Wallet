@@ -177,6 +177,11 @@ export function WithdrawForm({
                           **** {bank.accountNumber.slice(-4)} ·{" "}
                           {bank.accountName}
                         </p>
+                        {bank.bankBalance != null && (
+                          <p className="text-xs text-success font-medium mt-0.5">
+                            Số dư: {bank.bankBalance.toLocaleString("vi-VN")} đ
+                          </p>
+                        )}
                       </div>
                       {bank.isDefault && (
                         <span className="text-xs font-medium text-brand-default bg-brand-subtle px-2 py-0.5 rounded-full">

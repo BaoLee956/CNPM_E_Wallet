@@ -1,8 +1,8 @@
 /**
- * frontend/src/components/topup/TopUpForm.tsx  (UPDATED — với confirm sheet)
+ * frontend/src/components/topup/TopUpForm.tsx
  *
- * Flow mới:
- *   1. User điền form → bấm "Nạp tiền"
+ * Flow:
+ *   1. User chọn ngân hàng + nhập số tiền → bấm "Nạp tiền"
  *   2. Sheet mở với preview đầy đủ
  *   3. User bấm "Xác nhận nạp tiền" → gọi onSubmit thật sự
  */
@@ -23,7 +23,7 @@ import {
   type LinkedBank,
 } from "@/services/bankService";
 import { type TopUpPayload } from "@/services/walletService";
-import { Building2, Zap, ChevronRight, CheckCircle2 } from "lucide-react";
+import { Building2, ChevronRight, CheckCircle2 } from "lucide-react";
 
 interface TopUpFormProps {
   onSubmit: (data: TopUpPayload) => Promise<unknown>;
@@ -59,7 +59,13 @@ export function TopUpForm({
   useEffect(() => {
     bankService
       .getLinkedBanks()
-      .then(setLinkedBanks)
+      .then((banks) => {
+        setLinkedBanks(banks);
+        const defaultBank = banks.find((bank) => bank.isDefault === true);
+        if (defaultBank) {
+          setSelectedBankId(defaultBank.id);
+        }
+      })
       .finally(() => setLoadingBanks(false));
   }, []);
 
@@ -75,41 +81,42 @@ export function TopUpForm({
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const numAmount = parseFloat(amount);
-    if (!amount || isNaN(numAmount) || numAmount < 10_000) {
-      const msg = "Số tiền nạp tối thiểu là 10,000 VND";
-      showToast(msg, "warning");
-      return;
-    }
+  e.preventDefault();
+  const numAmount = parseFloat(amount);
 
-    const payload: TopUpPayload = {
-      amount: numAmount,
-      description: description.trim() || undefined,
-      ...(selectedBankId
-        ? { linkedBankId: selectedBankId }
-        : { method: "bank_transfer" }),
-    };
+  if (!amount || isNaN(numAmount) || numAmount < 10_000) {
+    const msg = "Số tiền nạp tối thiểu là 10,000 VND";
+    showToast(msg, "warning");
+    return;
+  }
 
-    const previewData: TransactionPreview = {
-      type: "topup",
-      amount: numAmount,
-      description: description.trim() || undefined,
-      fee: 0,
-      ...(selectedBank && bankInfo
-        ? {
-            bankName: bankInfo.name,
-            bankColor: bankInfo.color,
-            accountNumber: `**** ${selectedBank.accountNumber.slice(-4)}`,
-            accountName: selectedBank.accountName,
-          }
-        : {}),
-    };
+  if (!selectedBankId) return;
 
-    setPendingPayload(payload);
-    setPreview(previewData);
-    setSheetOpen(true);
+  const payload: TopUpPayload = {
+    amount: numAmount,
+    description: description.trim() || undefined,
+    linkedBankId: selectedBankId,
   };
+
+  const previewData: TransactionPreview = {
+    type: "topup",
+    amount: numAmount,
+    description: description.trim() || undefined,
+    fee: 0,
+    ...(selectedBank && bankInfo
+      ? {
+          bankName: bankInfo.name,
+          bankColor: bankInfo.color,
+          accountNumber: `**** ${selectedBank.accountNumber.slice(-4)}`,
+          accountName: selectedBank.accountName,
+        }
+      : {}),
+  };
+
+  setPendingPayload(payload);
+  setPreview(previewData);
+  setSheetOpen(true);
+};
 
   // Bước 2: user xác nhận → gọi API thật
   const handleConfirm = async () => {
@@ -143,9 +150,7 @@ export function TopUpForm({
                     <button
                       key={bank.id}
                       type="button"
-                      onClick={() =>
-                        setSelectedBankId(isSelected ? null : bank.id)
-                      }
+                      onClick={() => setSelectedBankId(bank.id)}
                       className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
                         isSelected
                           ? "border-brand-default bg-brand-subtle"
@@ -167,6 +172,11 @@ export function TopUpForm({
                           **** {bank.accountNumber.slice(-4)} ·{" "}
                           {bank.accountName}
                         </p>
+                        {bank.bankBalance != null && (
+                          <p className="text-xs text-success font-medium mt-0.5">
+                            Số dư: {bank.bankBalance.toLocaleString("vi-VN")} đ
+                          </p>
+                        )}
                       </div>
                       {bank.isDefault && (
                         <span className="text-xs font-medium text-brand-default bg-brand-subtle px-2 py-0.5 rounded-full">
@@ -182,35 +192,6 @@ export function TopUpForm({
                     </button>
                   );
                 })}
-
-                {/* Tuỳ chọn nạp không qua ngân hàng */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedBankId(null)}
-                  className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
-                    selectedBankId === null
-                      ? "border-brand-default bg-brand-subtle"
-                      : "border-subtle bg-white hover:border-brand-subtle"
-                  }`}
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-sunken">
-                    <Zap size={18} className="text-secondary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-primary">
-                      Nạp nhanh (mock)
-                    </p>
-                    <p className="text-xs text-secondary">
-                      Không qua ngân hàng
-                    </p>
-                  </div>
-                  {selectedBankId === null && (
-                    <CheckCircle2
-                      size={18}
-                      className="text-brand-default shrink-0"
-                    />
-                  )}
-                </button>
               </div>
             ) : (
               <a
@@ -240,6 +221,7 @@ export function TopUpForm({
               min="10000"
               step="10000"
               hint="Tối thiểu 10,000 VND"
+              disabled={!selectedBankId}
             />
             <div className="grid grid-cols-3 gap-2">
               {QUICK_AMOUNTS.map((preset) => (
@@ -247,11 +229,12 @@ export function TopUpForm({
                   key={preset}
                   type="button"
                   onClick={() => setAmount(String(preset))}
+                  disabled={!selectedBankId}
                   className={`rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors ${
                     amount === String(preset)
                       ? "border-brand-default bg-brand-subtle text-brand-default"
                       : "border-subtle bg-white text-secondary hover:border-brand-subtle hover:text-primary"
-                  }`}
+                  } ${!selectedBankId ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   {(preset / 1000).toLocaleString()}k
                 </button>
@@ -265,6 +248,7 @@ export function TopUpForm({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Nạp tiền mua sắm..."
+            disabled={!selectedBankId}
           />
 
           {/* ── Pending state ── */}
@@ -272,7 +256,7 @@ export function TopUpForm({
             <div className="flex items-center gap-3 rounded-xl bg-info-light/40 border border-info/20 p-3">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-info border-t-transparent shrink-0" />
               <p className="text-sm text-info">
-                Đang chờ xác nhận từ ngân hàng...
+                Đang xử lý giao dịch nạp tiền...
               </p>
             </div>
           )}
@@ -286,14 +270,15 @@ export function TopUpForm({
           <Button
             type="submit"
             loading={isLoading}
-            disabled={isProcessing || !amount || parseFloat(amount) < 10_000}
+            disabled={
+              isProcessing ||
+              !selectedBankId ||
+              !amount ||
+              parseFloat(amount) < 10_000
+            }
             fullWidth
           >
-            {isPending
-              ? "Đang xử lý..."
-              : selectedBankId
-                ? "Nạp từ ngân hàng"
-                : "Nạp tiền"}
+            {isPending ? "Đang xử lý..." : "Nạp tiền"}
           </Button>
         </form>
       </Card>

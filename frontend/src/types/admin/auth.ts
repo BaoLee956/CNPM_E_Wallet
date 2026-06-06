@@ -36,3 +36,12 @@ export interface AdminSession {
   role: string;
   access_token: string;
 }
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  message: string;
+}

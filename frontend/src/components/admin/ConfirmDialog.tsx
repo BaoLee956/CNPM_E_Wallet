@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { AlertTriangle, ShieldOff, ShieldCheck, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ShieldOff, ShieldCheck, X } from "lucide-react";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -11,7 +11,11 @@ interface ConfirmDialogProps {
   cancelLabel?: string;
   variant?: "danger" | "warning";
   loading?: boolean;
-  onConfirm: () => void;
+  reasonRequired?: boolean;
+  reasonLabel?: string;
+  reasonPlaceholder?: string;
+  initialReason?: string;
+  onConfirm: (reason?: string) => void;
   onCancel: () => void;
 }
 
@@ -23,10 +27,23 @@ export function ConfirmDialog({
   cancelLabel = "Cancel",
   variant = "danger",
   loading = false,
+  reasonRequired = false,
+  reasonLabel = "Reason",
+  reasonPlaceholder = "Enter reason...",
+  initialReason = "",
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  // Close on Escape key
+  const [reason, setReason] = useState(initialReason);
+  const [touched, setTouched] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setReason(initialReason);
+      setTouched(false);
+    }
+  }, [open, initialReason]);
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -45,19 +62,17 @@ export function ConfirmDialog({
   const iconBg = isDanger ? "bg-rose-500/20" : "bg-amber-500/20";
   const iconColor = isDanger ? "text-rose-400" : "text-amber-400";
   const Icon = isDanger ? ShieldOff : ShieldCheck;
+  const showError = reasonRequired && touched && !reason.trim();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onCancel}
       />
 
-      {/* Dialog */}
-      <div className="relative w-full max-w-sm animate-in zoom-in-95 fade-in duration-200">
+      <div className="relative w-full max-w-md animate-in zoom-in-95 fade-in duration-200">
         <div className="bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden">
-          {/* Header */}
           <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-slate-800">
             <div className="flex items-center gap-3">
               <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconBg}`}>
@@ -73,12 +88,29 @@ export function ConfirmDialog({
             </button>
           </div>
 
-          {/* Body */}
-          <div className="px-6 py-4">
+          <div className="px-6 py-4 space-y-4">
             <p className="text-sm text-slate-400 leading-relaxed">{message}</p>
+
+            {reasonRequired && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-2">
+                  {reasonLabel}
+                </label>
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  onBlur={() => setTouched(true)}
+                  rows={4}
+                  placeholder={reasonPlaceholder}
+                  className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30"
+                />
+                {showError && (
+                  <p className="mt-2 text-xs text-rose-400">Reason is required.</p>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Footer */}
           <div className="flex items-center gap-3 px-6 pb-5">
             <button
               onClick={onCancel}
@@ -88,7 +120,13 @@ export function ConfirmDialog({
               {cancelLabel}
             </button>
             <button
-              onClick={onConfirm}
+              onClick={() => {
+                if (reasonRequired && !reason.trim()) {
+                  setTouched(true);
+                  return;
+                }
+                onConfirm(reason.trim() || undefined);
+              }}
               disabled={loading}
               className={`flex-1 h-10 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-60 ${confirmColor}`}
             >

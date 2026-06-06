@@ -9,8 +9,9 @@ async function bootstrap() {
   app.enableCors(); // Cho phép CORS để frontend có thể gọi API
 
   app.useGlobalPipes(new ValidationPipe({
-    whitelist: true, // Loại bỏ các thuộc tính không có trong DTO
-  })); // Sử dụng ValidationPipe toàn cục
+    whitelist: true,
+    transform: true,
+  }));
 
   app.useGlobalFilters(new HttpExceptionFilter()); // Sử dụng ExceptionFilter toàn cục
 

@@ -5,7 +5,7 @@ import {
 import { AdminService } from './admin.service';
 import {
   QueryUsersDto, UpdateUserStatusDto,
-  QueryTransactionsDto, RefundDto,
+  QueryTransactionsDto, RefundDto, QueryStatisticsDto, ChangePasswordDto,
 } from './dto/admin.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -26,16 +26,28 @@ export class AdminController {
     return this.adminService.getUsers(query);
   }
 
+  @Get('users/:id')
+  getUserDetail(@Request() req: any, @Param('id') id: string) {
+    this.checkAdmin(req);
+    return this.adminService.getUserDetail(id);
+  }
+
   @Put('users/:id/status')
   updateUserStatus(@Request() req: any, @Param('id') id: string, @Body() dto: UpdateUserStatusDto) {
     this.checkAdmin(req);
-    return this.adminService.updateUserStatus(id, dto);
+    return this.adminService.updateUserStatus(id, req.user.id, dto);
   }
 
   @Get('transactions')
   getTransactions(@Request() req: any, @Query() query: QueryTransactionsDto) {
     this.checkAdmin(req);
     return this.adminService.getTransactions(query);
+  }
+
+  @Post('transactions/:id/resolve')
+  resolveTransaction(@Request() req: any, @Param('id') id: string) {
+    this.checkAdmin(req);
+    return this.adminService.resolveTransaction(id, req.user.id);
   }
 
   @Post('transactions/:id/refund')
@@ -45,8 +57,14 @@ export class AdminController {
   }
 
   @Get('reports/statistics')
-  getStatistics(@Request() req: any) {
+  getStatistics(@Request() req: any, @Query() query: QueryStatisticsDto) {
     this.checkAdmin(req);
-    return this.adminService.getStatistics();
+    return this.adminService.getStatistics(query);
+  }
+
+  @Put('change-password')
+  changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
+    this.checkAdmin(req);
+    return this.adminService.changePassword(req.user.id, dto);
   }
 }

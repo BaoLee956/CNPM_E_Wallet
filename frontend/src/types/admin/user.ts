@@ -16,6 +16,64 @@ export interface AdminUserResponse {
   }[];
 }
 
+export interface AdminUserDetailResponse {
+  message: string;
+  data: {
+    id: string;
+    name: string;
+    phoneNumber: string | null;
+    email: string;
+    role: string;
+    deletedAt: string | null;
+    createdAt: string;
+    lastLoginAt: string | null;
+    isEmailVerified: boolean;
+    isPhoneVerified: boolean;
+    twoFactorEnabled: boolean | null;
+    wallets: {
+      id: string;
+      accountNumber: string;
+      balance: number;
+      currency: string;
+      isActive: boolean;
+      dailyLimit: number | null;
+      monthlyLimit: number | null;
+      currentDailyUsage: number | null;
+      currentMonthlyUsage: number | null;
+      createdAt: string;
+    }[];
+    linkedBanks: {
+      id: string;
+      bankCode: string;
+      accountNumber: string;
+      accountName: string;
+      isDefault: boolean;
+      isVerified: boolean;
+      linkedAt: string;
+    }[];
+    transactions: {
+      id: string;
+      type: string;
+      status: string;
+      amount: number;
+      fee: number | null;
+      currency: string;
+      description: string | null;
+      failureReason: string | null;
+      createdAt: string;
+      completedAt: string | null;
+    }[];
+    notifications: {
+      id: string;
+      title: string;
+      message: string;
+      type: string;
+      isRead: boolean;
+      createdAt: string;
+    }[];
+  };
+}
+
 export interface AdminUsersListResponse {
   message: string;
   data: AdminUserResponse[];
@@ -50,7 +108,7 @@ export interface AdminUser {
   email: string;
   phoneNumber: string;
   walletBalance: number;
-  status: 'Active' | 'Locked' | 'Suspicious';
+  status: 'Active' | 'Locked';
   registrationDate: string;
   recentActivities: string[];
 }

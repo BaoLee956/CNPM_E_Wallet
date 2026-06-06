@@ -8,6 +8,8 @@ import type {
   AdminLoginResponse,
   AdminMeResponse,
   AdminSession,
+  ChangePasswordRequest,
+  ChangePasswordResponse,
 } from '@/types/admin/auth';
 
 export const adminAuthService = {
@@ -49,5 +51,13 @@ export const adminAuthService = {
   isAuthenticated(): boolean {
     if (typeof window === 'undefined') return false;
     return !!this.getSession() && !!localStorage.getItem('ewallet_token');
+  },
+
+  async changePassword(data: ChangePasswordRequest): Promise<ChangePasswordResponse> {
+    const res = await http.put<ChangePasswordResponse>(
+      '/api/v1/admin/change-password',
+      data
+    );
+    return res.data;
   },
 };
